@@ -2,36 +2,6 @@
 #include <bx/bx.h>
 #include <parser-library/parse.h>
 
-static int iterExportsCallback(void *_userData, peparse::VA _addr, std::string &_moduleName, std::string &_symbolName)
-{
-	printf("   %s %s %I64u\n", _moduleName.c_str(), _symbolName.c_str(), _addr);
-	return 0;
-}
-
-static int iterImportsCallback(void *_userData, peparse::VA _addr, const std::string &_moduleName, const std::string &_symbolName)
-{
-	printf("   %s %s %I64u\n", _moduleName.c_str(), _symbolName.c_str(), _addr);
-	return 0;
-}
-
-static int iterRelocCallback(void *_userData, peparse::VA _addr, peparse::reloc_type _type)
-{
-	printf("  %I64u %d\n", _addr, _type); 
-	return 0;
-}
-
-static int iterSymbolCallback(void *_userData, std::string &_name, uint32_t &_value, int16_t &_sectionNumber, uint16_t &_type, uint8_t &_storageClass, uint8_t &_numberOfAuxSymbols)
-{
-	printf("   %s: %u\n", _name.c_str(), _value);
-	return 0;
-}
-
-static int iterSectionsCallback(void *_userData, peparse::VA _secBase, std::string &_name, peparse::image_section_header _header, peparse::bounded_buffer *_data)
-{
-	printf("   %s: %I64u\n", _name.c_str(), _secBase);
-	return 0;
-}
-
 int main(int argc, char **argv)
 {
 	if (argc < 2)
@@ -46,14 +16,24 @@ int main(int argc, char **argv)
 	printf("Machine: %s\n", peparse::GetMachineAsString(pe));
 	printf("Subsystem: %s\n", peparse::GetSubsystemAsString(pe));
 	printf("Exports:\n");
-	peparse::IterExpVA(pe, iterExportsCallback, nullptr);
+	for (int i = 0; i < (int)pe->exports.size(); i++) {
+		const peparse::exportent &exp = pe->exports[i];
+		printf("   %s %s %I64u\n", exp.moduleName.c_str(), exp.symbolName.c_str(), exp.addr);
+	}
 	printf("Imports:\n");
-	peparse::IterImpVAString(pe, iterImportsCallback, nullptr);
-	/*printf("Relocations:\n");
-	peparse::IterRelocs(pe, iterRelocCallback, nullptr);*/
+	for (int i = 0; i < (int)pe->imports.size(); i++) {
+		const peparse::importent &import = pe->imports[i];
+		printf("   %s %s %I64u\n", import.moduleName.c_str(), import.symbolName.c_str(), import.addr);
+	}
 	printf("Sections:\n");
-	peparse::IterSec(pe, iterSectionsCallback, nullptr);
+	for (int i = 0; i < (int)pe->secs.size(); i++) {
+		const peparse::section &section = pe->secs[i];
+		printf("   %s: %I64u\n", section.sectionName.c_str(), section.sectionBase);
+	}
 	printf("Symbols:\n");
-	peparse::IterSymbols(pe, iterSymbolCallback, nullptr);
+	for (int i = 0; i < (int)pe->symbols.size(); i++) {
+		const peparse::symbol &symbol = pe->symbols[i];
+		printf("   %s: %u\n", symbol.strName.c_str(), symbol.value);
+	}
 	return 0;
 }

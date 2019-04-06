@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #include "nt-headers.h"
 #include "to_string.h"
@@ -149,7 +150,81 @@ splitBuffer(bounded_buffer *b, std::uint32_t from, std::uint32_t to);
 void deleteBuffer(bounded_buffer *b);
 uint64_t bufLen(bounded_buffer *b);
 
-struct parsed_pe_internal;
+struct section {
+	std::string sectionName;
+	std::uint64_t sectionBase;
+	bounded_buffer *sectionData;
+	image_section_header sec;
+};
+
+struct importent {
+	VA addr;
+	std::string symbolName;
+	std::string moduleName;
+};
+
+struct exportent {
+	VA addr;
+	std::string symbolName;
+	std::string moduleName;
+};
+
+struct reloc {
+	VA shiftedAddr;
+	reloc_type type;
+};
+
+union symbol_name {
+	std::uint8_t shortName[NT_SHORT_NAME_LEN];
+	std::uint32_t zeroes;
+	std::uint64_t data;
+};
+
+struct aux_symbol_f1 {
+	std::uint32_t tagIndex;
+	std::uint32_t totalSize;
+	std::uint32_t pointerToLineNumber;
+	std::uint32_t pointerToNextFunction;
+};
+
+struct aux_symbol_f2 {
+	std::uint16_t lineNumber;
+	std::uint32_t pointerToNextFunction;
+};
+
+struct aux_symbol_f3 {
+	std::uint32_t tagIndex;
+	std::uint32_t characteristics;
+};
+
+struct aux_symbol_f4 {
+	std::uint8_t filename[SYMTAB_RECORD_LEN];
+	std::string strFilename;
+};
+
+struct aux_symbol_f5 {
+	std::uint32_t length;
+	std::uint16_t numberOfRelocations;
+	std::uint16_t numberOfLineNumbers;
+	std::uint32_t checkSum;
+	std::uint16_t number;
+	std::uint8_t selection;
+};
+
+struct symbol {
+	std::string strName;
+	symbol_name name;
+	std::uint32_t value;
+	std::int16_t sectionNumber;
+	std::uint16_t type;
+	std::uint8_t storageClass;
+	std::uint8_t numberOfAuxSymbols;
+	std::vector<aux_symbol_f1> aux_symbols_f1;
+	std::vector<aux_symbol_f2> aux_symbols_f2;
+	std::vector<aux_symbol_f3> aux_symbols_f3;
+	std::vector<aux_symbol_f4> aux_symbols_f4;
+	std::vector<aux_symbol_f5> aux_symbols_f5;
+};
 
 typedef struct _pe_header {
   nt_header_32 nt;
@@ -157,8 +232,13 @@ typedef struct _pe_header {
 
 typedef struct _parsed_pe {
   bounded_buffer *fileBuffer;
-  parsed_pe_internal *internal;
   pe_header peHeader;
+  std::vector<section> secs;
+  std::vector<resource> rsrcs;
+  std::vector<importent> imports;
+  std::vector<reloc> relocs;
+  std::vector<exportent> exports;
+  std::vector<symbol> symbols;
 } parsed_pe;
 
 // get parser error status as integer

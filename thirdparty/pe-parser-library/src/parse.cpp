@@ -25,7 +25,6 @@ THE SOFTWARE.
 #include <algorithm>
 #include <cstring>
 #include <iostream>
-#include <vector>
 #include <stdexcept>
 
 #include <parser-library/nt-headers.h>
@@ -34,93 +33,8 @@ THE SOFTWARE.
 
 namespace peparse {
 
-struct section {
-  std::string sectionName;
-  std::uint64_t sectionBase;
-  bounded_buffer *sectionData;
-  image_section_header sec;
-};
-
-struct importent {
-  VA addr;
-  std::string symbolName;
-  std::string moduleName;
-};
-
-struct exportent {
-  VA addr;
-  std::string symbolName;
-  std::string moduleName;
-};
-
-struct reloc {
-  VA shiftedAddr;
-  reloc_type type;
-};
-
 #define SYMBOL_NAME_OFFSET(sn) (static_cast<std::uint32_t>(sn.data >> 32))
 #define SYMBOL_TYPE_HI(x) (x.type >> 8)
-
-union symbol_name {
-  std::uint8_t shortName[NT_SHORT_NAME_LEN];
-  std::uint32_t zeroes;
-  std::uint64_t data;
-};
-
-struct aux_symbol_f1 {
-  std::uint32_t tagIndex;
-  std::uint32_t totalSize;
-  std::uint32_t pointerToLineNumber;
-  std::uint32_t pointerToNextFunction;
-};
-
-struct aux_symbol_f2 {
-  std::uint16_t lineNumber;
-  std::uint32_t pointerToNextFunction;
-};
-
-struct aux_symbol_f3 {
-  std::uint32_t tagIndex;
-  std::uint32_t characteristics;
-};
-
-struct aux_symbol_f4 {
-  std::uint8_t filename[SYMTAB_RECORD_LEN];
-  std::string strFilename;
-};
-
-struct aux_symbol_f5 {
-  std::uint32_t length;
-  std::uint16_t numberOfRelocations;
-  std::uint16_t numberOfLineNumbers;
-  std::uint32_t checkSum;
-  std::uint16_t number;
-  std::uint8_t selection;
-};
-
-struct symbol {
-  std::string strName;
-  symbol_name name;
-  std::uint32_t value;
-  std::int16_t sectionNumber;
-  std::uint16_t type;
-  std::uint8_t storageClass;
-  std::uint8_t numberOfAuxSymbols;
-  std::vector<aux_symbol_f1> aux_symbols_f1;
-  std::vector<aux_symbol_f2> aux_symbols_f2;
-  std::vector<aux_symbol_f3> aux_symbols_f3;
-  std::vector<aux_symbol_f4> aux_symbols_f4;
-  std::vector<aux_symbol_f5> aux_symbols_f5;
-};
-
-struct parsed_pe_internal {
-  std::vector<section> secs;
-  std::vector<resource> rsrcs;
-  std::vector<importent> imports;
-  std::vector<reloc> relocs;
-  std::vector<exportent> exports;
-  std::vector<symbol> symbols;
-};
 
 std::uint32_t err = 0;
 std::string err_loc;
@@ -244,9 +158,7 @@ bool getSecForVA(const std::vector<section> &secs, VA v, section &sec) {
 }
 
 void IterRsrc(parsed_pe *pe, iterRsrc cb, void *cbd) {
-  parsed_pe_internal *pint = pe->internal;
-
-  for (resource r : pint->rsrcs) {
+  for (resource r : pe->rsrcs) {
     if (cb(cbd, r) != 0) {
       break;
     }
@@ -878,7 +790,7 @@ bool getExports(parsed_pe *p) {
       return false;
     }
 
-    if (!getSecForVA(p->internal->secs, addr, s)) {
+    if (!getSecForVA(p->secs, addr, s)) {
       return false;
     }
 
@@ -902,7 +814,7 @@ bool getExports(parsed_pe *p) {
     }
 
     section nameSec;
-    if (!getSecForVA(p->internal->secs, nameVA, nameSec)) {
+    if (!getSecForVA(p->secs, nameVA, nameSec)) {
       return false;
     }
 
@@ -939,7 +851,7 @@ bool getExports(parsed_pe *p) {
       }
 
       section namesSec;
-      if (!getSecForVA(p->internal->secs, namesVA, namesSec)) {
+      if (!getSecForVA(p->secs, namesVA, namesSec)) {
         return false;
       }
 
@@ -964,7 +876,7 @@ bool getExports(parsed_pe *p) {
       }
 
       section eatSec;
-      if (!getSecForVA(p->internal->secs, eatVA, eatSec)) {
+      if (!getSecForVA(p->secs, eatVA, eatSec)) {
         return false;
       }
 
@@ -998,7 +910,7 @@ bool getExports(parsed_pe *p) {
       }
 
       section ordinalTableSec;
-      if (!getSecForVA(p->internal->secs, ordinalTableVA, ordinalTableSec)) {
+      if (!getSecForVA(p->secs, ordinalTableVA, ordinalTableSec)) {
         return false;
       }
 
@@ -1024,7 +936,7 @@ bool getExports(parsed_pe *p) {
 
         section curNameSec;
 
-        if (!getSecForVA(p->internal->secs, curNameVA, curNameSec)) {
+        if (!getSecForVA(p->secs, curNameVA, curNameSec)) {
           return false;
         }
 
@@ -1081,7 +993,7 @@ bool getExports(parsed_pe *p) {
           a.addr = symVA;
           a.symbolName = symName;
           a.moduleName = modName;
-          p->internal->exports.push_back(a);
+          p->exports.push_back(a);
         }
       }
     }
@@ -1113,7 +1025,7 @@ bool getRelocations(parsed_pe *p) {
       return false;
     }
 
-    if (!getSecForVA(p->internal->secs, vaAddr, d)) {
+    if (!getSecForVA(p->secs, vaAddr, d)) {
       return false;
     }
 
@@ -1175,7 +1087,7 @@ bool getRelocations(parsed_pe *p) {
 
         r.shiftedAddr = relocVA;
         r.type = static_cast<reloc_type>(type);
-        p->internal->relocs.push_back(r);
+        p->relocs.push_back(r);
 
         entryCount--;
         rvaofft += sizeof(std::uint16_t);
@@ -1209,7 +1121,7 @@ bool getImports(parsed_pe *p) {
       return false;
     }
 
-    if (!getSecForVA(p->internal->secs, addr, c)) {
+    if (!getSecForVA(p->secs, addr, c)) {
       return false;
     }
 
@@ -1246,7 +1158,7 @@ bool getImports(parsed_pe *p) {
       }
 
       section nameSec;
-      if (!getSecForVA(p->internal->secs, name, nameSec)) {
+      if (!getSecForVA(p->secs, name, nameSec)) {
         return false;
       }
 
@@ -1294,7 +1206,7 @@ bool getImports(parsed_pe *p) {
 
       section lookupSec;
       if (lookupVA == 0 ||
-          !getSecForVA(p->internal->secs, lookupVA, lookupSec)) {
+          !getSecForVA(p->secs, lookupVA, lookupSec)) {
         return false;
       }
 
@@ -1336,7 +1248,7 @@ bool getImports(parsed_pe *p) {
           std::string symName;
           section symNameSec;
 
-          if (!getSecForVA(p->internal->secs, valVA, symNameSec)) {
+          if (!getSecForVA(p->secs, valVA, symNameSec)) {
             return false;
           }
 
@@ -1372,7 +1284,7 @@ bool getImports(parsed_pe *p) {
 
           ent.symbolName = symName;
           ent.moduleName = modName;
-          p->internal->imports.push_back(ent);
+          p->imports.push_back(ent);
         } else {
           std::string symName =
               "ORDINAL_" + modName + "_" + to_string<std::uint32_t>(oval, std::dec);
@@ -1392,7 +1304,7 @@ bool getImports(parsed_pe *p) {
           ent.symbolName = symName;
           ent.moduleName = modName;
 
-          p->internal->imports.push_back(ent);
+          p->imports.push_back(ent);
         }
 
         if (p->peHeader.nt.OptionalMagic == NT_OPTIONAL_32_MAGIC) {
@@ -1504,7 +1416,7 @@ bool getSymbolTable(parsed_pe *p) {
     offset += sizeof(std::uint8_t);
 
     // Save the symbol
-    p->internal->symbols.push_back(sym);
+    p->symbols.push_back(sym);
 
     if (sym.numberOfAuxSymbols == 0) {
       continue;
@@ -1764,15 +1676,6 @@ parsed_pe *ParsePEFromFile(const char *filePath) {
     return nullptr;
   }
 
-  p->internal = new (std::nothrow) parsed_pe_internal();
-
-  if (p->internal == nullptr) {
-    deleteBuffer(p->fileBuffer);
-    delete p;
-    PE_ERR(PEERR_MEM);
-    return nullptr;
-  }
-
   // get header information
   bounded_buffer *remaining = nullptr;
   if (!getHeader(p->fileBuffer, p->peHeader, remaining)) {
@@ -1783,7 +1686,7 @@ parsed_pe *ParsePEFromFile(const char *filePath) {
   }
 
   bounded_buffer *file = p->fileBuffer;
-  if (!getSections(remaining, file, p->peHeader.nt, p->internal->secs)) {
+  if (!getSections(remaining, file, p->peHeader.nt, p->secs)) {
     deleteBuffer(remaining);
     deleteBuffer(p->fileBuffer);
     delete p;
@@ -1791,7 +1694,7 @@ parsed_pe *ParsePEFromFile(const char *filePath) {
     return nullptr;
   }
 
-  if (!getResources(remaining, file, p->internal->secs, p->internal->rsrcs)) {
+  if (!getResources(remaining, file, p->secs, p->rsrcs)) {
     deleteBuffer(remaining);
     deleteBuffer(p->fileBuffer);
     delete p;
@@ -1845,25 +1748,24 @@ void DestructParsedPE(parsed_pe *p) {
 
   deleteBuffer(p->fileBuffer);
 
-  for (section s : p->internal->secs) {
+  for (section s : p->secs) {
     if (s.sectionData != nullptr) {
       deleteBuffer(s.sectionData);
     }
   }
-  for (resource r : p->internal->rsrcs) {
+  for (resource r : p->rsrcs) {
     if (r.buf != nullptr) {
       deleteBuffer(r.buf);
     }
   }
 
-  delete p->internal;
   delete p;
   return;
 }
 
 // iterate over the imports by VA and string
 void IterImpVAString(parsed_pe *pe, iterVAStr cb, void *cbd) {
-  std::vector<importent> &l = pe->internal->imports;
+  std::vector<importent> &l = pe->imports;
 
   for (importent i : l) {
     if (cb(cbd, i.addr, i.moduleName, i.symbolName) != 0) {
@@ -1876,7 +1778,7 @@ void IterImpVAString(parsed_pe *pe, iterVAStr cb, void *cbd) {
 
 // iterate over relocations in the PE file
 void IterRelocs(parsed_pe *pe, iterReloc cb, void *cbd) {
-  std::vector<reloc> &l = pe->internal->relocs;
+  std::vector<reloc> &l = pe->relocs;
 
   for (reloc r : l) {
     if (cb(cbd, r.shiftedAddr, r.type) != 0) {
@@ -1889,7 +1791,7 @@ void IterRelocs(parsed_pe *pe, iterReloc cb, void *cbd) {
 
 // Iterate over symbols (symbol table) in the PE file
 void IterSymbols(parsed_pe *pe, iterSymbol cb, void *cbd) {
-  std::vector<symbol> &l = pe->internal->symbols;
+  std::vector<symbol> &l = pe->symbols;
 
   for (symbol s : l) {
     if (cb(cbd,
@@ -1908,7 +1810,7 @@ void IterSymbols(parsed_pe *pe, iterSymbol cb, void *cbd) {
 
 // iterate over the exports by VA
 void IterExpVA(parsed_pe *pe, iterExp cb, void *cbd) {
-  std::vector<exportent> &l = pe->internal->exports;
+  std::vector<exportent> &l = pe->exports;
 
   for (exportent i : l) {
     if (cb(cbd, i.addr, i.moduleName, i.symbolName) != 0) {
@@ -1921,9 +1823,7 @@ void IterExpVA(parsed_pe *pe, iterExp cb, void *cbd) {
 
 // iterate over sections
 void IterSec(parsed_pe *pe, iterSec cb, void *cbd) {
-  parsed_pe_internal *pint = pe->internal;
-
-  for (section s : pint->secs) {
+  for (section s : pe->secs) {
     if (cb(cbd, s.sectionBase, s.sectionName, s.sec, s.sectionData) != 0) {
       break;
     }
@@ -1936,7 +1836,7 @@ bool ReadByteAtVA(parsed_pe *pe, VA v, std::uint8_t &b) {
   // find this VA in a section
   section s;
 
-  if (!getSecForVA(pe->internal->secs, v, s)) {
+  if (!getSecForVA(pe->secs, v, s)) {
     PE_ERR(PEERR_SECTVA);
     return false;
   }
