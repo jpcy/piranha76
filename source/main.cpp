@@ -3,6 +3,7 @@
 #include <bx/bx.h>
 #include <bx/os.h>
 #include "MemoryModule.h"
+#include <ddraw.h>
 
 #define LOG_IMPORTS 0
 
@@ -15,6 +16,14 @@ LSTATUS (APIENTRY *RegCloseKey)(HKEY hKey);
 LSTATUS (APIENTRY *RegQueryValueExA)(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
 LSTATUS (APIENTRY *RegCreateKeyExA)(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition );
 LSTATUS (APIENTRY *RegSetValueExA)(HKEY hKey, LPCSTR lpValueName, DWORD Reserved, DWORD dwType, const BYTE* lpData, DWORD cbData);
+
+// ddraw.dll
+
+HRESULT (APIENTRY *DirectDrawCreate)(GUID *lpGUID, LPDIRECTDRAW *lplpDD, IUnknown *pUnkOuter);
+
+// gdi32.dll
+
+HBITMAP (WINAPI *CreateDIBSection)(HDC hdc, CONST BITMAPINFO *pbmi, UINT usage, VOID **ppvBits, HANDLE hSection, DWORD offset);
 
 // kernel32.dll
 
@@ -31,7 +40,9 @@ void *(*StrLookupCreate)(const char *_filename);
 
 // user32.dll
 
+HWND (WINAPI *CreateWindowExA)(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
 HWND (WINAPI *FindWindowA)(LPCSTR lpClassName, LPCSTR lpWindowName);
+int (WINAPI *GetSystemMetrics)(int nIndex);
 int (WINAPI *MessageBoxA)(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
 BOOL (WINAPI *ShowWindow)(HWND hWnd, int nCmdShow);
 
@@ -74,6 +85,20 @@ LSTATUS APIENTRY RegCreateKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPS
 LSTATUS APIENTRY RegSetValueExA(HKEY hKey, LPCSTR lpValueName, DWORD Reserved, DWORD dwType, const BYTE* lpData, DWORD cbData) {
 	printf("[RegSetValueExA]\n");
 	return original::RegSetValueExA(hKey, lpValueName, Reserved, dwType, lpData, cbData);
+}
+
+// ddraw.dll
+
+HRESULT APIENTRY DirectDrawCreate(GUID *lpGUID, LPDIRECTDRAW *lplpDD, IUnknown *pUnkOuter) {
+	printf("[DirectDrawCreate]\n");
+	return original::DirectDrawCreate(lpGUID, lplpDD, pUnkOuter);
+}
+
+// gdi32.dll
+
+HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *pbmi, UINT usage, VOID **ppvBits, HANDLE hSection, DWORD offset) {
+	printf("[CreateDIBSection]\n");
+	return original::CreateDIBSection(hdc, pbmi, usage, ppvBits, hSection, offset);
 }
 
 // kernel32.dll
@@ -119,9 +144,23 @@ void *StrLookupCreate(const char *_filename) {
 
 // user32.dll
 
+HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam) {
+	printf("[CreateWindowExA] classname:'%s', window name:'%s', width:%d, height:%d\n", lpClassName, lpWindowName, nWidth, nHeight);
+	return original::CreateWindowExA(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+}
+
 HWND WINAPI FindWindowA(LPCSTR lpClassName, LPCSTR lpWindowName) {
 	printf("[FindWindowA] classname:'%s', window name:'%s'\n", lpClassName, lpWindowName);
 	return original::FindWindowA(lpClassName, lpWindowName);
+}
+
+int WINAPI GetSystemMetrics(int nIndex) {
+	printf("[GetSystemMetrics] nIndex:%d\n", nIndex);
+	if (nIndex == SM_CXSCREEN)
+		return 1600;
+	else if (nIndex == SM_CYSCREEN)
+		return 900;
+	return original::GetSystemMetrics(nIndex);
 }
 
 int WINAPI MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
@@ -159,6 +198,8 @@ static WrappedFunc s_wrappedFuncs[] = {
 	WRAPPED_FUNC(advapi32.dll, RegQueryValueExA),
 	WRAPPED_FUNC(advapi32.dll, RegCreateKeyExA),
 	WRAPPED_FUNC(advapi32.dll, RegSetValueExA),
+	WRAPPED_FUNC(ddraw.dll, DirectDrawCreate),
+	WRAPPED_FUNC(gdi32.dll, CreateDIBSection),
 	WRAPPED_FUNC(kernel32.dll, GetDriveTypeA),
 	WRAPPED_FUNC(kernel32.dll, GetLogicalDrives),
 	WRAPPED_FUNC(kernel32.dll, GetVolumeInformationA),
@@ -166,7 +207,9 @@ static WrappedFunc s_wrappedFuncs[] = {
 	WRAPPED_FUNC(kernel32.dll, GlobalMemoryStatus),
 	WRAPPED_FUNC(kernel32.dll, LoadLibraryA),
 	WRAPPED_FUNC(strlkup.dll, StrLookupCreate),
+	WRAPPED_FUNC(user32.dll, CreateWindowExA),
 	WRAPPED_FUNC(user32.dll, FindWindowA),
+	WRAPPED_FUNC(user32.dll, GetSystemMetrics),
 	WRAPPED_FUNC(user32.dll, MessageBoxA),
 	WRAPPED_FUNC(user32.dll, ShowWindow),
 	WRAPPED_FUNC(win32.dll, mciSendCommandA)
