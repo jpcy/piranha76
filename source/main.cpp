@@ -96,6 +96,8 @@ BOOL WINAPI GetVolumeInformationA(LPCSTR lpRootPathName, LPSTR lpVolumeNameBuffe
 VOID WINAPI GetSystemInfo(LPSYSTEM_INFO lpSystemInfo) {
 	printf("[GetSystemInfo]\n");
 	original::GetSystemInfo(lpSystemInfo);
+	// 386, 486 or 586 will result in call to _disable() which throws an exception
+	lpSystemInfo->dwProcessorType = 0;
 }
 
 VOID WINAPI GlobalMemoryStatus(LPMEMORYSTATUS lpBuffer) {
