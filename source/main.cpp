@@ -260,8 +260,8 @@ static void customFreeLibrary(HCUSTOMMODULE _lib, void * /*_userData*/) {
 
 int main(int /*argc*/, char ** /*argv*/) {
 	const char *filename = "i76.exe";
-	FILE *f = fopen(filename, "rb");
-	if (!f) {
+	FILE *f;
+	if (fopen_s(&f, filename, "rb") != 0) {
 		fprintf(stderr, "Error opening %s\n", filename);
 		return 1;
 	}

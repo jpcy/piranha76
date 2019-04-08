@@ -140,9 +140,10 @@ OutputLastError(const char *msg)
     char *tmpmsg;
     FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
         NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&tmp, 0, NULL);
-    tmpmsg = (char *)LocalAlloc(LPTR, strlen(msg) + strlen(tmp) + 3);
-    sprintf(tmpmsg, "%s: %s", msg, tmp);
-    OutputDebugString(tmpmsg);
+	size_t tmpmsgLength = strlen(msg) + strlen(tmp) + 3;
+    tmpmsg = (char *)LocalAlloc(LPTR, tmpmsgLength);
+    sprintf_s(tmpmsg, tmpmsgLength, "%s: %s", msg, (char *)tmp);
+    OutputDebugStringA(tmpmsg);
 	printf("%s\n", tmpmsg);
     LocalFree(tmpmsg);
     LocalFree(tmp);
@@ -1134,7 +1135,7 @@ MemoryLoadStringEx(HMEMORYMODULE module, UINT id, LPTSTR buffer, int maxsize, WO
         buffer[size] = 0;
     }
 #if defined(UNICODE)
-    wcsncpy(buffer, data->NameString, size);
+    wcsncpy_s(buffer, maxsize, data->NameString, size);
 #else
     wcstombs(buffer, data->NameString, size);
 #endif
