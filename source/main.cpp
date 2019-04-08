@@ -6,22 +6,94 @@
 
 namespace original {
 
-HMODULE (*LoadLibraryA)(LPCSTR);
+BOOL (WINAPI *GetVolumeInformationA)(LPCSTR lpRootPathName, LPSTR lpVolumeNameBuffer, DWORD nVolumeNameSize, LPDWORD lpVolumeSerialNumber, LPDWORD lpMaximumComponentLength, LPDWORD lpFileSystemFlags, LPSTR lpFileSystemNameBuffer, DWORD nFileSystemNameSize);
+HWND (WINAPI *FindWindowA)(LPCSTR lpClassName, LPCSTR lpWindowName);
+HMODULE (WINAPI *LoadLibraryA)(LPCSTR);
 int (WINAPI *MessageBoxA)(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
+BOOL (WINAPI *ShowWindow)(HWND hWnd, int nCmdShow);
+
+// strlkup.dll
+void *(*StrLookupCreate)(const char *_filename);
+
+// advapi32.dll
+LSTATUS (APIENTRY *RegOpenKeyExA)(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult);
+LSTATUS (APIENTRY *RegCloseKey)(HKEY hKey);
+LSTATUS (APIENTRY *RegQueryValueExA)(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
+LSTATUS (APIENTRY *RegCreateKeyExA)(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition );
+LSTATUS (APIENTRY *RegSetValueExA)(HKEY hKey, LPCSTR lpValueName, DWORD Reserved, DWORD dwType, const BYTE* lpData, DWORD cbData);
+
+// win32.dll
+
+MCIERROR (WINAPI *mciSendCommandA)(MCIDEVICEID mciId, UINT uMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
 
 } // namespace original
 
 namespace wrap {
 
-HMODULE LoadLibraryA(LPCSTR lpLibFileName) {
-	printf("Called LoadLibraryA filename:'%s'\n", lpLibFileName);
+BOOL WINAPI GetVolumeInformationA(LPCSTR lpRootPathName, LPSTR lpVolumeNameBuffer, DWORD nVolumeNameSize, LPDWORD lpVolumeSerialNumber, LPDWORD lpMaximumComponentLength, LPDWORD lpFileSystemFlags, LPSTR lpFileSystemNameBuffer, DWORD nFileSystemNameSize) {
+	printf("[GetVolumeInformationA]\n");
+	return original::GetVolumeInformationA(lpRootPathName, lpVolumeNameBuffer, nVolumeNameSize, lpVolumeSerialNumber, lpMaximumComponentLength, lpFileSystemFlags, lpFileSystemNameBuffer, nFileSystemNameSize);
+}
+
+HWND WINAPI FindWindowA(LPCSTR lpClassName, LPCSTR lpWindowName) {
+	printf("[FindWindowA] classname:'%s', window name:'%s'\n", lpClassName, lpWindowName);
+	return original::FindWindowA(lpClassName, lpWindowName);
+}
+
+HMODULE WINAPI LoadLibraryA(LPCSTR lpLibFileName) {
+	printf("[LoadLibraryA] filename:'%s'\n", lpLibFileName);
 	return original::LoadLibraryA(lpLibFileName);
 }
 
-int WINAPI MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType)
-{
-	printf("Called MessageBoxA text:'%s' caption:'%s'\n", lpText, lpCaption);
+int WINAPI MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
+	printf("[MessageBoxA] text:'%s' caption:'%s'\n", lpText, lpCaption);
 	return original::MessageBoxA(hWnd, lpText, lpCaption, uType);
+}
+
+BOOL WINAPI ShowWindow(HWND hWnd, int nCmdShow) {
+	printf("[ShowWindow]\n");
+	return original::ShowWindow(hWnd, nCmdShow);
+}
+
+// strlkup.dll
+
+void *StrLookupCreate(const char *_filename) {
+	printf("[StrLookupCreate] filename:'%s'\n", _filename);
+	return original::StrLookupCreate(_filename);
+}
+
+// advapi32.dll
+
+LSTATUS APIENTRY RegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {
+	printf("[RegOpenKeyExA] sub key:'%s'\n", lpSubKey);
+	return original::RegOpenKeyExA(hKey, lpSubKey, ulOptions, samDesired, phkResult);
+}
+
+LSTATUS APIENTRY RegCloseKey(HKEY hKey) {
+	printf("[RegCloseKey]\n");
+	return original::RegCloseKey(hKey);
+}
+
+LSTATUS APIENTRY RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData) {
+	printf("[RegQueryValueExA]\n");
+	return original::RegQueryValueExA(hKey, lpValueName, lpReserved, lpType, lpData, lpcbData);
+}
+
+LSTATUS APIENTRY RegCreateKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition ) {
+	printf("[RegCreateKeyExA] sub key:'%s'\n", lpSubKey);
+	return original::RegCreateKeyExA(hKey, lpSubKey, Reserved, lpClass, dwOptions, samDesired, lpSecurityAttributes, phkResult, lpdwDisposition);
+}
+
+LSTATUS APIENTRY RegSetValueExA(HKEY hKey, LPCSTR lpValueName, DWORD Reserved, DWORD dwType, const BYTE* lpData, DWORD cbData) {
+	printf("[RegSetValueExA]\n");
+	return original::RegSetValueExA(hKey, lpValueName, Reserved, dwType, lpData, cbData);
+}
+
+// win32.dll
+
+MCIERROR WINAPI mciSendCommandA(MCIDEVICEID mciId, UINT uMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2) {
+	printf("[mciSendCommandA]\n");
+	return original::mciSendCommandA(mciId, uMsg, dwParam1, dwParam2);
 }
 
 } // namespace wrap
@@ -34,9 +106,21 @@ struct WrappedFunc
 	void **original;
 };
 
+#define WRAPPED_FUNC(lib, name) { #lib, #name, wrap::##name, (void **)&original::##name }
+
 static WrappedFunc s_wrappedFuncs[] = {
-	{ "kernel32.dll", "LoadLibraryA", wrap::LoadLibraryA, (void **)&original::LoadLibraryA },
-	{ "user32.dll", "MessageBoxA", wrap::MessageBoxA, (void **)&original::MessageBoxA }
+	WRAPPED_FUNC(advapi32.dll, RegOpenKeyExA),
+	WRAPPED_FUNC(advapi32.dll, RegCloseKey),
+	WRAPPED_FUNC(advapi32.dll, RegQueryValueExA),
+	WRAPPED_FUNC(advapi32.dll, RegCreateKeyExA),
+	WRAPPED_FUNC(advapi32.dll, RegSetValueExA),
+	WRAPPED_FUNC(kernel32.dll, GetVolumeInformationA),
+	WRAPPED_FUNC(kernel32.dll, LoadLibraryA),
+	WRAPPED_FUNC(strlkup.dll, StrLookupCreate),
+	WRAPPED_FUNC(user32.dll, FindWindowA),
+	WRAPPED_FUNC(user32.dll, MessageBoxA),
+	WRAPPED_FUNC(user32.dll, ShowWindow),
+	WRAPPED_FUNC(win32.dll, mciSendCommandA)
 };
 
 struct Library
