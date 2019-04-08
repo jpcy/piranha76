@@ -1,9 +1,75 @@
+#include <vector>
 #include <stdio.h>
 #include <bx/bx.h>
+#include <bx/os.h>
 #include "MemoryModule.h"
 
-int main(int /*argc*/, char ** /*argv*/)
+struct Library
 {
+	char name[256];
+	void *handle;
+};
+
+static std::vector<Library> s_libraries;
+
+struct Symbol
+{
+	uint32_t ordinal;
+	char name[256];
+};
+
+static Symbol s_smackSymbols[] = {
+	{ 21, "_SmackNextFrame@4" },
+	{ 32, "_SmackWait@4" },
+	{ 7, "_SmackBufferSetPalette@4" },
+	{ 14, "_SmackOpen@12" },
+	{ 5, "_SmackBufferNewPalette@12" },
+	{ 17, "_SmackSoundOnOff@8" },
+	{ 23, "_SmackToBuffer@28" },
+	{ 18, "_SmackClose@4" },
+	{ 28, "_SmackToBufferRect@8" },
+	{ 25, "_SmackColorRemap@16" },
+	{ 19, "_SmackDoFrame@4" },
+	{ 3, "_SmackBufferBlit@32" },
+	{ 6, "_SmackBufferClose@4" },
+	{ 38, "_SmackSoundUseDirectSound@4" },
+	{ 2, "_SmackBufferOpen@24" }
+};
+
+static HCUSTOMMODULE customLoadLibrary(LPCSTR _filename, void * /*_userData*/) {
+	printf("Load library %s\n", _filename);
+	Library lib;
+	bx::strCopy(lib.name, sizeof(lib.name), _filename);
+	lib.handle = bx::dlopen(_filename);
+	s_libraries.push_back(lib);
+	return lib.handle;
+}
+
+static FARPROC customGetProcAddress(HCUSTOMMODULE _lib, LPCSTR _proc, void * /*_userData*/) {
+	for (const Library &lib : s_libraries) {
+		if (_lib != lib.handle || bx::strCmpI(lib.name, "SMACKW32.DLL") != 0)
+			continue;
+		auto ordinal = *((uint32_t *)&_proc);
+		for (const Symbol &symbol : s_smackSymbols) {
+			if (symbol.ordinal == ordinal) {
+				_proc = symbol.name;
+				break;
+			}
+		}
+		break;
+	}
+	printf("   symbol %s\n", _proc);
+	auto result = (FARPROC)bx::dlsym(_lib, _proc);
+	if (!result)
+		fprintf(stderr, "failed\n");
+	return result;
+}
+
+static void customFreeLibrary(HCUSTOMMODULE _lib, void * /*_userData*/) {
+	bx::dlclose(_lib);
+}
+
+int main(int /*argc*/, char ** /*argv*/) {
 	const char *filename = "i76.exe";
 	FILE *f = fopen(filename, "rb");
 	if (!f) {
@@ -20,9 +86,9 @@ int main(int /*argc*/, char ** /*argv*/)
 		return 1;
 	}
 	fclose(f);
-	HMEMORYMODULE module = MemoryLoadLibrary(fileData, fileLength);
+	HMEMORYMODULE module = MemoryLoadLibraryEx(fileData, fileLength, MemoryDefaultAlloc, MemoryDefaultFree, customLoadLibrary, customGetProcAddress, customFreeLibrary, nullptr);
 	if (!module) {
-		fprintf(stderr, "MemoryLoadLibrary failed\n");
+		fprintf(stderr, "MemoryLoadLibraryEx failed\n");
 		return 1;
 	}
 	MemoryCallEntryPoint(module);
