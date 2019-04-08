@@ -69,7 +69,7 @@ struct ExportNameEntry {
 };
 
 typedef BOOL (WINAPI *DllEntryProc)(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved);
- typedef int (WINAPI *ExeEntryProc)(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd);
+typedef int (WINAPI *ExeEntryProc)(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd);
 
 #ifdef _WIN64
 typedef struct POINTER_LIST {
@@ -628,6 +628,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
         userdata);
 
     if (code == NULL) {
+		printf("Allocating at base address 0x%x failed\n", old_header->OptionalHeader.ImageBase);
         // try to allocate memory at arbitrary position
         code = (unsigned char *)allocMemory(NULL,
             alignedImageSize,
@@ -638,6 +639,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
             SetLastError(ERROR_OUTOFMEMORY);
             return NULL;
         }
+		printf("Base address is now 0x%x\n", (uintptr_t)code);
     }
 
 #ifdef _WIN64
