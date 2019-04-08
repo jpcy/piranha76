@@ -1,8 +1,6 @@
 local BUILD_DIR = "build"
 local THIRDPARTY_DIR = "thirdparty"
 local BX_DIR = path.join(THIRDPARTY_DIR, "bx")
-local PE_PARSER_LIBRARY_NAME = "pe-parser-library"
-local PE_PARSER_LIBRARY_DIR = path.join(THIRDPARTY_DIR, PE_PARSER_LIBRARY_NAME)
 
 solution "piranha76"
 	configurations { "Release", "Debug" }
@@ -39,10 +37,9 @@ project "piranha76"
 	files "source/*.*"
 	includedirs
 	{
-		path.join(BX_DIR, "include"),
-		path.join(PE_PARSER_LIBRARY_DIR, "include")
+		path.join(BX_DIR, "include")
 	}
-	links { "bx", PE_PARSER_LIBRARY_NAME }
+	links { "bx" }
 	filter "system:windows"
 		links { "psapi" }
 	filter "action:vs*"
@@ -81,11 +78,3 @@ project "bx"
 		includedirs { path.join(BX_DIR, "include/compat/msvc") }
 	filter { "system:windows", "action:gmake" }
 		includedirs { path.join(BX_DIR, "include/compat/mingw") }
-
-project(PE_PARSER_LIBRARY_NAME)
-	kind "StaticLib"
-	language "C++"
-	exceptionhandling "Off"
-	rtti "Off"
-	includedirs { path.join(PE_PARSER_LIBRARY_DIR, "include") }
-	files(path.join(PE_PARSER_LIBRARY_DIR, "**.*"))
