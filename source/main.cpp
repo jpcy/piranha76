@@ -19,6 +19,9 @@ LSTATUS (APIENTRY *RegSetValueExA)(HKEY hKey, LPCSTR lpValueName, DWORD Reserved
 
 // ddraw.dll
 
+LPDDENUMMODESCALLBACK2 ddrawEnumDisplayModes = nullptr;
+LPDIRECTDRAW7 directDrawInterface = nullptr;
+
 HRESULT (WINAPI *DirectDrawCreate)(GUID *lpGUID, LPDIRECTDRAW *lplpDD, IUnknown *pUnkOuter);
 HRESULT (WINAPI *DirectDrawEnumerateA)(LPDDENUMCALLBACKA lpCallback, LPVOID lpContext);
 
@@ -126,9 +129,181 @@ LSTATUS APIENTRY RegSetValueExA(HKEY hKey, LPCSTR lpValueName, DWORD Reserved, D
 
 // ddraw.dll
 
+static HRESULT __stdcall EnumDisplayModesCallback(LPDDSURFACEDESC2 Arg1, LPVOID Arg2) {
+	printf("   %ux%u, %u bpp\n", Arg1->dwWidth, Arg1->dwHeight, Arg1->lPitch / Arg1->dwWidth * 8);
+	//Arg1->lPitch /= 2;
+	return original::ddrawEnumDisplayModes(Arg1, Arg2);
+}
+
+struct CustomIDirectDraw
+{
+	/*** IUnknown methods ***/
+	virtual __declspec(nothrow) HRESULT __stdcall QueryInterface(REFIID riid, LPVOID FAR * ppvObj) {
+		printf("[IDirectDraw::QueryInterface]\n");
+		return original::directDrawInterface->QueryInterface(riid, ppvObj);
+	}
+
+	virtual __declspec(nothrow) ULONG __stdcall AddRef() {
+		printf("[IDirectDraw::AddRef]\n");
+		return original::directDrawInterface->AddRef();
+	}
+
+	virtual __declspec(nothrow) ULONG __stdcall Release() {
+		printf("[IDirectDraw::Release]\n");
+		return original::directDrawInterface->Release();
+	}
+
+	/*** IDirectDraw methods ***/
+	virtual __declspec(nothrow) HRESULT __stdcall Compact() {
+		printf("[IDirectDraw::Compact]\n");
+		return original::directDrawInterface->Compact();
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall CreateClipper(DWORD arg1, LPDIRECTDRAWCLIPPER FAR* arg2, IUnknown FAR * arg3) {
+		printf("[IDirectDraw::CreateClipper]\n");
+		return original::directDrawInterface->CreateClipper(arg1, arg2, arg3);
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall CreatePalette(DWORD arg1, LPPALETTEENTRY arg2, LPDIRECTDRAWPALETTE FAR* arg3, IUnknown FAR * arg4) {
+		printf("[IDirectDraw::CreatePalette]\n");
+		return original::directDrawInterface->CreatePalette(arg1, arg2, arg3, arg4);
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall CreateSurface(LPDDSURFACEDESC2 arg1, LPDIRECTDRAWSURFACE7 FAR *arg2, IUnknown FAR *arg3) {
+		printf("[IDirectDraw::CreateSurface]\n");
+		return original::directDrawInterface->CreateSurface(arg1, arg2, arg3);
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall DuplicateSurface(LPDIRECTDRAWSURFACE7 arg1, LPDIRECTDRAWSURFACE7 FAR * arg2) {
+		printf("[IDirectDraw::DuplicateSurface]\n");
+		return original::directDrawInterface->DuplicateSurface(arg1, arg2);
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall EnumDisplayModes(DWORD arg1, LPDDSURFACEDESC2 arg2, LPVOID arg3, LPDDENUMMODESCALLBACK2 arg4) {
+		printf("[IDirectDraw::EnumDisplayModes]\n");
+		original::ddrawEnumDisplayModes = arg4;
+		return original::directDrawInterface->EnumDisplayModes(arg1, arg2, arg3, EnumDisplayModesCallback);
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall EnumSurfaces(DWORD arg1, LPDDSURFACEDESC2 arg2, LPVOID arg3, LPDDENUMSURFACESCALLBACK7 arg4) {
+		printf("[IDirectDraw::EnumSurfaces]\n");
+		return original::directDrawInterface->EnumSurfaces(arg1, arg2, arg3, arg4);
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall FlipToGDISurface() {
+		printf("[IDirectDraw::FlipToGDISurface]\n");
+		return original::directDrawInterface->FlipToGDISurface();
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall GetCaps(LPDDCAPS arg1, LPDDCAPS arg2) {
+		printf("[IDirectDraw::GetCaps]\n");
+		return original::directDrawInterface->GetCaps(arg1, arg2);
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall GetDisplayMode(LPDDSURFACEDESC2 arg1) {
+		printf("[IDirectDraw::GetDisplayMode]\n");
+		return original::directDrawInterface->GetDisplayMode(arg1);
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall GetFourCCCodes(LPDWORD arg1, LPDWORD arg2) {
+		printf("[IDirectDraw::GetFourCCCodes]\n");
+		return original::directDrawInterface->GetFourCCCodes(arg1, arg2);
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall GetGDISurface(LPDIRECTDRAWSURFACE7 FAR *arg1) {
+		printf("[IDirectDraw::GetGDISurface]\n");
+		return original::directDrawInterface->GetGDISurface(arg1);
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall GetMonitorFrequency(LPDWORD arg1) {
+		printf("[IDirectDraw::GetMonitorFrequency]\n");
+		return original::directDrawInterface->GetMonitorFrequency(arg1);
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall GetScanLine(LPDWORD arg1) {
+		printf("[IDirectDraw::GetScanLine]\n");
+		return original::directDrawInterface->GetScanLine(arg1);
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall GetVerticalBlankStatus(LPBOOL arg1) {
+		printf("[IDirectDraw::GetVerticalBlankStatus]\n");
+		return original::directDrawInterface->GetVerticalBlankStatus(arg1);
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall Initialize(GUID FAR *arg1) {
+		printf("[IDirectDraw::Initialize]\n");
+		return original::directDrawInterface->Initialize(arg1);
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall RestoreDisplayMode() {
+		printf("[IDirectDraw::RestoreDisplayMode]\n");
+		return original::directDrawInterface->RestoreDisplayMode();
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall SetCooperativeLevel(HWND arg1, DWORD arg2) {
+		// 17 = DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE
+		printf("[IDirectDraw::SetCooperativeLevel value:%u]\n", arg2);
+		return original::directDrawInterface->SetCooperativeLevel(arg1, arg2);
+		//return original::directDrawInterface->SetCooperativeLevel(arg1, DDSCL_NORMAL);
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall SetDisplayMode(DWORD arg1, DWORD arg2, DWORD arg3, DWORD arg4, DWORD arg5) {
+		printf("[IDirectDraw::SetDisplayMode]\n");
+		return original::directDrawInterface->SetDisplayMode(arg1, arg2, arg3, arg4, arg5);
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall WaitForVerticalBlank(DWORD arg1, HANDLE arg2) {
+		printf("[IDirectDraw::WaitForVerticalBlank]\n");
+		return original::directDrawInterface->WaitForVerticalBlank(arg1, arg2);
+	}
+
+	/*** Added in the v2 interface ***/
+	virtual __declspec(nothrow) HRESULT __stdcall GetAvailableVidMem(LPDDSCAPS2 arg1, LPDWORD arg2, LPDWORD arg3) {
+		printf("[IDirectDraw::GetAvailableVidMem]\n");
+		return original::directDrawInterface->GetAvailableVidMem(arg1, arg2, arg3);
+	}
+
+	/*** Added in the V4 Interface ***/
+	virtual __declspec(nothrow) HRESULT __stdcall GetSurfaceFromDC(HDC arg1, LPDIRECTDRAWSURFACE7 *arg2) {
+		printf("[IDirectDraw::GetSurfaceFromDC]\n");
+		return original::directDrawInterface->GetSurfaceFromDC(arg1, arg2);
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall RestoreAllSurfaces() {
+		printf("[IDirectDraw::RestoreAllSurfaces]\n");
+		return original::directDrawInterface->RestoreAllSurfaces();
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall TestCooperativeLevel() {
+		printf("[IDirectDraw::TestCooperativeLevel]\n");
+		return original::directDrawInterface->TestCooperativeLevel();
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall GetDeviceIdentifier(LPDDDEVICEIDENTIFIER2 arg1, DWORD arg2) {
+		printf("[IDirectDraw::GetDeviceIdentifier]\n");
+		return original::directDrawInterface->GetDeviceIdentifier(arg1, arg2);
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall StartModeTest(LPSIZE arg1, DWORD arg2, DWORD arg3) {
+		printf("[IDirectDraw::StartModeTest]\n");
+		return original::directDrawInterface->StartModeTest(arg1, arg2, arg3);
+	}
+
+	virtual __declspec(nothrow) HRESULT __stdcall EvaluateMode(DWORD arg1, DWORD * arg2) {
+		printf("[IDirectDraw::EvaluateMode]\n");
+		return original::directDrawInterface->EvaluateMode(arg1, arg2);
+	}
+};
+
+static CustomIDirectDraw *directDrawInterface = nullptr;
+
 HRESULT WINAPI DirectDrawCreate(GUID *lpGUID, LPDIRECTDRAW *lplpDD, IUnknown *pUnkOuter) {
 	printf("[DirectDrawCreate]\n");
-	return original::DirectDrawCreate(lpGUID, lplpDD, pUnkOuter);
+	HRESULT result = original::DirectDrawCreate(lpGUID, lplpDD, pUnkOuter);
+	original::directDrawInterface = (LPDIRECTDRAW7)*lplpDD;
+	directDrawInterface = new CustomIDirectDraw();
+	*lplpDD = (LPDIRECTDRAW)directDrawInterface;
+	return result;
 }
 
 HRESULT WINAPI DirectDrawEnumerateA(LPDDENUMCALLBACKA lpCallback, LPVOID lpContext) {
@@ -273,10 +448,10 @@ SHORT WINAPI GetKeyState(int nVirtKey) {
 
 int WINAPI GetSystemMetrics(int nIndex) {
 	printf("[GetSystemMetrics] nIndex:%d\n", nIndex);
-	if (nIndex == SM_CXSCREEN)
+	/*if (nIndex == SM_CXSCREEN)
 		return 1600;
 	else if (nIndex == SM_CYSCREEN)
-		return 900;
+		return 900;*/
 	return original::GetSystemMetrics(nIndex);
 }
 
