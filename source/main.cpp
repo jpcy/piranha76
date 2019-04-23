@@ -19,7 +19,8 @@ LSTATUS (APIENTRY *RegSetValueExA)(HKEY hKey, LPCSTR lpValueName, DWORD Reserved
 
 // ddraw.dll
 
-HRESULT (APIENTRY *DirectDrawCreate)(GUID *lpGUID, LPDIRECTDRAW *lplpDD, IUnknown *pUnkOuter);
+HRESULT (WINAPI *DirectDrawCreate)(GUID *lpGUID, LPDIRECTDRAW *lplpDD, IUnknown *pUnkOuter);
+HRESULT (WINAPI *DirectDrawEnumerateA)(LPDDENUMCALLBACKA lpCallback, LPVOID lpContext);
 
 // gdi32.dll
 
@@ -40,11 +41,47 @@ void *(*StrLookupCreate)(const char *_filename);
 
 // user32.dll
 
+BOOL (WINAPI *AdjustWindowRect)(LPRECT lpRect, DWORD dwStyle, BOOL bMenu);
+HDC (WINAPI *BeginPaint)(HWND hWnd, LPPAINTSTRUCT lpPaint);
+BOOL (WINAPI *ClientToScreen)(HWND hWnd, LPPOINT lpPoint);
+BOOL (WINAPI *ClipCursor)(CONST RECT *lpRect);
 HWND (WINAPI *CreateWindowExA)(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
+LRESULT (WINAPI *DefWindowProcA)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+BOOL (WINAPI *DestroyWindow)(HWND hWnd);
+LRESULT (WINAPI *DispatchMessageA)(CONST MSG *lpMsg);
+BOOL (WINAPI *EndPaint)(HWND hWnd, CONST PAINTSTRUCT *lpPaint);
 HWND (WINAPI *FindWindowA)(LPCSTR lpClassName, LPCSTR lpWindowName);
+SHORT (WINAPI *GetAsyncKeyState)(int vKey);
+BOOL (WINAPI *GetClientRect)(HWND hWnd, LPRECT lpRect);
+BOOL (WINAPI *GetCursorPos)(LPPOINT lpPoint);
+HDC (WINAPI *GetDC)(HWND hWnd);
+HWND (WINAPI *GetFocus)(VOID);
+int (WINAPI *GetKeyboardType)(int nTypeFlag);
+SHORT (WINAPI *GetKeyState)(int nVirtKey);
 int (WINAPI *GetSystemMetrics)(int nIndex);
+BOOL (WINAPI *GetWindowRect)(HWND hWnd, LPRECT lpRect);
+HCURSOR (WINAPI *LoadCursorA)(HINSTANCE hInstance, LPCSTR lpCursorName);
+UINT (WINAPI *MapVirtualKeyA)(UINT uCode, UINT uMapType);
 int (WINAPI *MessageBoxA)(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
+BOOL (WINAPI *PeekMessageA)(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg);
+ATOM (WINAPI *RegisterClassA)(CONST WNDCLASSA *lpWndClass);
+int (WINAPI *ReleaseDC)(HWND hWnd, HDC hDC);
+BOOL (WINAPI *ScreenToClient)(HWND hWnd, LPPOINT lpPoint);
+LRESULT (WINAPI *SendMessageA)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+HCURSOR (WINAPI *SetCursor)(HCURSOR hCursor);
+BOOL (WINAPI *SetCursorPos)(int X, int Y);
+HWND (WINAPI *SetFocus)(HWND hWnd);
+BOOL (WINAPI *SetMenu)(HWND hWnd, HMENU hMenu);
+BOOL (WINAPI *SetRect)(LPRECT lprc, int xLeft, int yTop, int xRight,int yBottom);
+LONG (WINAPI *SetWindowLongA)(HWND hWnd, int nIndex, LONG dwNewLong);
+BOOL (WINAPI *SetWindowPos)(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
+int (WINAPI *ShowCursor)(BOOL bShow);
 BOOL (WINAPI *ShowWindow)(HWND hWnd, int nCmdShow);
+BOOL (WINAPI *TranslateMessage)(CONST MSG *lpMsg);
+BOOL (WINAPI *UpdateWindow)(HWND hWnd);
+BOOL (WINAPI *ValidateRect)(HWND hWnd, CONST RECT *lpRect);
+int (WINAPIV *wsprintfA)(LPSTR, LPCSTR, ...);
+int (WINAPI *wvsprintfA)(LPSTR, LPCSTR, va_list arglist);
 
 // win32.dll
 
@@ -89,9 +126,14 @@ LSTATUS APIENTRY RegSetValueExA(HKEY hKey, LPCSTR lpValueName, DWORD Reserved, D
 
 // ddraw.dll
 
-HRESULT APIENTRY DirectDrawCreate(GUID *lpGUID, LPDIRECTDRAW *lplpDD, IUnknown *pUnkOuter) {
+HRESULT WINAPI DirectDrawCreate(GUID *lpGUID, LPDIRECTDRAW *lplpDD, IUnknown *pUnkOuter) {
 	printf("[DirectDrawCreate]\n");
 	return original::DirectDrawCreate(lpGUID, lplpDD, pUnkOuter);
+}
+
+HRESULT WINAPI DirectDrawEnumerateA(LPDDENUMCALLBACKA lpCallback, LPVOID lpContext) {
+	printf("[DirectDrawEnumerateA]\n");
+	return original::DirectDrawEnumerateA(lpCallback, lpContext);
 }
 
 // gdi32.dll
@@ -144,14 +186,89 @@ void *StrLookupCreate(const char *_filename) {
 
 // user32.dll
 
+BOOL WINAPI AdjustWindowRect(LPRECT lpRect, DWORD dwStyle, BOOL bMenu) {
+	printf("[AdjustWindowRect]\n");
+	return original::AdjustWindowRect(lpRect, dwStyle, bMenu);
+}
+
+HDC WINAPI BeginPaint(HWND hWnd, LPPAINTSTRUCT lpPaint) {
+	printf("[BeginPaint]\n");
+	return original::BeginPaint(hWnd, lpPaint);
+}
+
+BOOL WINAPI ClientToScreen(HWND hWnd, LPPOINT lpPoint) {
+	printf("[ClientToScreen]\n");
+	return original::ClientToScreen(hWnd, lpPoint);
+}
+
+BOOL WINAPI ClipCursor(CONST RECT *lpRect) {
+	printf("[ClipCursor] left:%d, right:%d, top:%d, bottom:%d\n", lpRect->left, lpRect->right, lpRect->top, lpRect->bottom);
+	return original::ClipCursor(lpRect);
+}
+
 HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam) {
 	printf("[CreateWindowExA] classname:'%s', window name:'%s', width:%d, height:%d\n", lpClassName, lpWindowName, nWidth, nHeight);
 	return original::CreateWindowExA(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
 }
 
+LRESULT WINAPI DefWindowProcA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
+	printf("[DefWindowProcA]\n");
+	return original::DefWindowProcA(hWnd, Msg, wParam, lParam);
+}
+
+BOOL WINAPI DestroyWindow(HWND hWnd) {
+	printf("[DestroyWindow]\n");
+	return original::DestroyWindow(hWnd);
+}
+
+LRESULT WINAPI DispatchMessageA(CONST MSG *lpMsg) {
+	printf("[DispatchMessageA]\n");
+	return original::DispatchMessageA(lpMsg);
+}
+
+BOOL WINAPI EndPaint(HWND hWnd, CONST PAINTSTRUCT *lpPaint) {
+	printf("[EndPaint]\n");
+	return original::EndPaint(hWnd, lpPaint);
+}
+
 HWND WINAPI FindWindowA(LPCSTR lpClassName, LPCSTR lpWindowName) {
 	printf("[FindWindowA] classname:'%s', window name:'%s'\n", lpClassName, lpWindowName);
 	return original::FindWindowA(lpClassName, lpWindowName);
+}
+
+SHORT WINAPI GetAsyncKeyState(int vKey) {
+	printf("[GetAsyncKeyState] key:%d\n", vKey);
+	return original::GetAsyncKeyState(vKey);
+}
+
+BOOL WINAPI GetClientRect(HWND hWnd, LPRECT lpRect) {
+	printf("[GetClientRect]\n");
+	return original::GetClientRect(hWnd, lpRect);
+}
+
+BOOL WINAPI GetCursorPos(LPPOINT lpPoint) {
+	printf("[GetCursorPos]\n");
+	return original::GetCursorPos(lpPoint);
+}
+
+HDC WINAPI GetDC(HWND hWnd) {
+	printf("[GetDC]\n");
+	return original::GetDC(hWnd);
+}
+
+HWND WINAPI GetFocus(VOID) {
+	printf("[GetFocus]\n");
+	return original::GetFocus();
+}
+
+int WINAPI GetKeyboardType(int nTypeFlag) {
+	printf("[GetKeyboardType]\n");
+	return original::GetKeyboardType(nTypeFlag);
+}
+
+SHORT WINAPI GetKeyState(int nVirtKey) {
+	printf("[GetKeyState] key:%d\n", nVirtKey);
+	return original::GetKeyState(nVirtKey);
 }
 
 int WINAPI GetSystemMetrics(int nIndex) {
@@ -163,14 +280,119 @@ int WINAPI GetSystemMetrics(int nIndex) {
 	return original::GetSystemMetrics(nIndex);
 }
 
+BOOL WINAPI GetWindowRect(HWND hWnd, LPRECT lpRect) {
+	printf("[GetWindowRect\n");
+	return original::GetWindowRect(hWnd, lpRect);
+}
+
+HCURSOR WINAPI LoadCursorA(HINSTANCE hInstance, LPCSTR lpCursorName) {
+	printf("[LoadCursorA\n");
+	return original::LoadCursorA(hInstance, lpCursorName);
+}
+
+UINT WINAPI MapVirtualKeyA(UINT uCode, UINT uMapType) {
+	printf("[MapVirtualKeyA]\n");
+	return original::MapVirtualKeyA(uCode, uMapType);
+}
+
 int WINAPI MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
 	printf("[MessageBoxA] text:'%s' caption:'%s'\n", lpText, lpCaption);
 	return original::MessageBoxA(hWnd, lpText, lpCaption, uType);
 }
 
+BOOL WINAPI PeekMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg) {
+	printf("[PeekMessageA]\n");
+	return original::PeekMessageA(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg);
+}
+
+ATOM WINAPI RegisterClassA(CONST WNDCLASSA *lpWndClass) {
+	printf("[RegisterClassA]\n");
+	return original::RegisterClassA(lpWndClass);
+}
+
+int WINAPI ReleaseDC(HWND hWnd, HDC hDC) {
+	printf("[ReleaseDC]\n");
+	return original::ReleaseDC(hWnd, hDC);
+}
+
+BOOL WINAPI ScreenToClient(HWND hWnd, LPPOINT lpPoint) {
+	printf("[ScreenToClient] x:%d, y:%d\n", lpPoint->x, lpPoint->y);
+	return original::ScreenToClient(hWnd, lpPoint);
+}
+
+LRESULT WINAPI SendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
+	printf("[SendMessageA]\n");
+	return original::SendMessageA(hWnd, Msg, wParam, lParam);
+}
+
+HCURSOR WINAPI SetCursor(HCURSOR hCursor) {
+	printf("[SetCursor]\n");
+	return original::SetCursor(hCursor);
+}
+
+BOOL WINAPI SetCursorPos(int X, int Y) {
+	printf("[SetCursorPos] x:%d, y:%d\n", X, Y);
+	return original::SetCursorPos(X, Y);
+}
+
+HWND WINAPI SetFocus(HWND hWnd) {
+	printf("[SetFocus]\n");
+	return original::SetFocus(hWnd);
+}
+
+BOOL WINAPI SetMenu(HWND hWnd, HMENU hMenu) {
+	printf("[SetMenu]\n");
+	return original::SetMenu(hWnd, hMenu);
+}
+
+BOOL WINAPI SetRect(LPRECT lprc, int xLeft, int yTop, int xRight,int yBottom) {
+	printf("[SetRect]\n");
+	return original::SetRect(lprc, xLeft, yTop, xRight, yBottom);
+}
+
+LONG WINAPI SetWindowLongA(HWND hWnd, int nIndex, LONG dwNewLong) {
+	printf("[SetWindowLongA]\n");
+	return original::SetWindowLongA(hWnd, nIndex, dwNewLong);
+}
+
+BOOL WINAPI SetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags) {
+	printf("[SetWindowPos]\n");
+	return original::SetWindowPos(hWnd, hWndInsertAfter, X, Y, cx, cy, uFlags);
+}
+
+int WINAPI ShowCursor(BOOL bShow) {
+	printf("[ShowCursor] value:%s\n", bShow ? "true" : "false");
+	return original::ShowCursor(bShow);
+}
+
 BOOL WINAPI ShowWindow(HWND hWnd, int nCmdShow) {
 	printf("[ShowWindow]\n");
 	return original::ShowWindow(hWnd, nCmdShow);
+}
+
+BOOL WINAPI TranslateMessage(CONST MSG *lpMsg) {
+	printf("[TranslateMessage]\n");
+	return original::TranslateMessage(lpMsg);
+}
+
+BOOL WINAPI UpdateWindow(HWND hWnd) {
+	printf("[UpdateWindow]\n");
+	return original::UpdateWindow(hWnd);
+}
+
+BOOL WINAPI ValidateRect(HWND hWnd, CONST RECT *lpRect) {
+	printf("[ValidateRect]\n");
+	return original::ValidateRect(hWnd, lpRect);
+}
+
+int WINAPIV wsprintfA(LPSTR, LPCSTR, ...) {
+	printf("[wsprintfA]\n");
+	return 0;
+}
+
+int WINAPI wvsprintfA(LPSTR, LPCSTR, va_list arglist) {
+	printf("[wvsprintfA]\n");
+	return 0;
 }
 
 // win32.dll
@@ -199,6 +421,7 @@ static WrappedFunc s_wrappedFuncs[] = {
 	WRAPPED_FUNC(advapi32.dll, RegCreateKeyExA),
 	WRAPPED_FUNC(advapi32.dll, RegSetValueExA),
 	WRAPPED_FUNC(ddraw.dll, DirectDrawCreate),
+	WRAPPED_FUNC(ddraw.dll, DirectDrawEnumerateA),
 	WRAPPED_FUNC(gdi32.dll, CreateDIBSection),
 	WRAPPED_FUNC(kernel32.dll, GetDriveTypeA),
 	WRAPPED_FUNC(kernel32.dll, GetLogicalDrives),
@@ -207,11 +430,47 @@ static WrappedFunc s_wrappedFuncs[] = {
 	WRAPPED_FUNC(kernel32.dll, GlobalMemoryStatus),
 	WRAPPED_FUNC(kernel32.dll, LoadLibraryA),
 	WRAPPED_FUNC(strlkup.dll, StrLookupCreate),
+	WRAPPED_FUNC(user32.dll, AdjustWindowRect),
+	WRAPPED_FUNC(user32.dll, BeginPaint),
+	WRAPPED_FUNC(user32.dll, ClientToScreen),
+	WRAPPED_FUNC(user32.dll, ClipCursor),
 	WRAPPED_FUNC(user32.dll, CreateWindowExA),
+	WRAPPED_FUNC(user32.dll, DefWindowProcA),
+	WRAPPED_FUNC(user32.dll, DestroyWindow),
+	WRAPPED_FUNC(user32.dll, DispatchMessageA),
+	WRAPPED_FUNC(user32.dll, EndPaint),
 	WRAPPED_FUNC(user32.dll, FindWindowA),
+	WRAPPED_FUNC(user32.dll, GetAsyncKeyState),
+	WRAPPED_FUNC(user32.dll, GetClientRect),
+	WRAPPED_FUNC(user32.dll, GetCursorPos),
+	WRAPPED_FUNC(user32.dll, GetDC),
+	WRAPPED_FUNC(user32.dll, GetFocus),
+	WRAPPED_FUNC(user32.dll, GetKeyboardType),
+	WRAPPED_FUNC(user32.dll, GetKeyState),
 	WRAPPED_FUNC(user32.dll, GetSystemMetrics),
+	WRAPPED_FUNC(user32.dll, GetWindowRect),
+	WRAPPED_FUNC(user32.dll, LoadCursorA),
+	WRAPPED_FUNC(user32.dll, MapVirtualKeyA),
 	WRAPPED_FUNC(user32.dll, MessageBoxA),
+	WRAPPED_FUNC(user32.dll, PeekMessageA),
+	WRAPPED_FUNC(user32.dll, RegisterClassA),
+	WRAPPED_FUNC(user32.dll, ReleaseDC),
+	WRAPPED_FUNC(user32.dll, ScreenToClient),
+	WRAPPED_FUNC(user32.dll, SendMessageA),
+	WRAPPED_FUNC(user32.dll, SetCursor),
+	WRAPPED_FUNC(user32.dll, SetCursorPos),
+	WRAPPED_FUNC(user32.dll, SetFocus),
+	WRAPPED_FUNC(user32.dll, SetMenu),
+	WRAPPED_FUNC(user32.dll, SetRect),
+	WRAPPED_FUNC(user32.dll, SetWindowLongA),
+	WRAPPED_FUNC(user32.dll, SetWindowPos),
+	WRAPPED_FUNC(user32.dll, ShowCursor),
 	WRAPPED_FUNC(user32.dll, ShowWindow),
+	WRAPPED_FUNC(user32.dll, TranslateMessage),
+	WRAPPED_FUNC(user32.dll, UpdateWindow),
+	WRAPPED_FUNC(user32.dll, ValidateRect),
+	WRAPPED_FUNC(user32.dll, wsprintfA),
+	WRAPPED_FUNC(user32.dll, wvsprintfA),
 	WRAPPED_FUNC(win32.dll, mciSendCommandA)
 };
 
