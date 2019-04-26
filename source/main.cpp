@@ -327,7 +327,32 @@ HRESULT (WINAPI *DirectDrawEnumerateA)(LPDDENUMCALLBACKA lpCallback, LPVOID lpCo
 
 // gdi32.dll
 
+int (WINAPI *AddFontResourceA)(LPCSTR Arg1);
+HDC (WINAPI *CreateCompatibleDC)(HDC hdc);
 HBITMAP (WINAPI *CreateDIBSection)(HDC hdc, CONST BITMAPINFO *pbmi, UINT usage, VOID **ppvBits, HANDLE hSection, DWORD offset);
+HFONT (WINAPI *CreateFontIndirectA)(LOGFONTA *lplf);
+HPALETTE (WINAPI *CreatePalette)(CONST LOGPALETTE * plpal);
+BOOL (WINAPI *CreateScalableFontResourceA)(DWORD fdwHidden, LPCSTR lpszFont, LPCSTR lpszFile, LPCSTR lpszPath);
+BOOL (WINAPI *DeleteDC)(HDC hdc);
+BOOL (WINAPI *DeleteObject)(HGDIOBJ ho);
+int (WINAPI *GetDeviceCaps)(HDC hdc, int index);
+HGDIOBJ (WINAPI *GetStockObject)(int i);
+UINT (WINAPI *GetSystemPaletteEntries)(HDC hdc, UINT iStart, UINT cEntries, LPPALETTEENTRY pPalEntries);
+BOOL (APIENTRY *GetTextExtentExPointA)(HDC hdc, LPCSTR lpszString, int cchString, int nMaxExtent, LPINT lpnFit, LPINT lpnDx, LPSIZE lpSize);
+BOOL (APIENTRY *GetTextExtentPoint32A)(HDC hdc, LPCSTR lpString, int c, LPSIZE psizl);
+BOOL (WINAPI *GdiFlush)(void);
+UINT (WINAPI *RealizePalette)(HDC hdc);
+BOOL (WINAPI *Rectangle)(HDC hdc, int left, int top, int right, int bottom);
+BOOL (WINAPI *RemoveFontResourceA)(LPCSTR lpFileName);
+HGDIOBJ (WINAPI *SelectObject)(HDC hdc, HGDIOBJ h);
+HPALETTE (WINAPI *SelectPalette)(HDC hdc, HPALETTE hPal, BOOL bForceBkgd);
+COLORREF (WINAPI *SetBkColor)(HDC hdc, COLORREF color);
+int (WINAPI *SetBkMode)(HDC hdc, int mode);
+int (WINAPI *SetDIBitsToDevice)(HDC hdc, int xDest, int yDest, DWORD w, DWORD h, int xSrc, int ySrc, UINT StartScan, UINT cLines, CONST VOID * lpvBits, CONST BITMAPINFO * lpbmi, UINT ColorUse);
+DWORD (WINAPI *SetMapperFlags)(HDC hdc, DWORD flags);
+UINT (WINAPI *SetPaletteEntries)(HPALETTE hpal, UINT iStart, UINT cEntries, CONST PALETTEENTRY *pPalEntries);
+COLORREF (WINAPI *SetTextColor)(HDC hdc, COLORREF color);
+BOOL (WINAPI *TextOutA)(HDC hdc, int x, int y, LPCSTR lpString, int c);
 
 // kernel32.dll
 
@@ -665,9 +690,134 @@ HRESULT WINAPI DirectDrawEnumerateA(LPDDENUMCALLBACKA lpCallback, LPVOID lpConte
 
 // gdi32.dll
 
+int WINAPI AddFontResourceA(LPCSTR Arg1) {
+	printf("[AddFontResourceA]\n");
+	return original::AddFontResourceA(Arg1);
+}
+
+HDC WINAPI CreateCompatibleDC(HDC hdc) {
+	printf("[CreateCompatibleDC]\n");
+	return original::CreateCompatibleDC(hdc);
+}
+
 HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *pbmi, UINT usage, VOID **ppvBits, HANDLE hSection, DWORD offset) {
 	printf("[CreateDIBSection]\n");
 	return original::CreateDIBSection(hdc, pbmi, usage, ppvBits, hSection, offset);
+}
+
+HFONT WINAPI CreateFontIndirectA(LOGFONTA *lplf) {
+	printf("[CreateFontIndirectA]\n");
+	return original::CreateFontIndirectA(lplf);
+}
+
+HPALETTE WINAPI CreatePalette(CONST LOGPALETTE * plpal) {
+	printf("[CreatePalette]\n");
+	return original::CreatePalette(plpal);
+}
+
+BOOL WINAPI CreateScalableFontResourceA(DWORD fdwHidden, LPCSTR lpszFont, LPCSTR lpszFile, LPCSTR lpszPath) {
+	printf("[CreateScalableFontResourceA]\n");
+	return original::CreateScalableFontResourceA(fdwHidden, lpszFont, lpszFile, lpszPath);
+}
+
+BOOL WINAPI DeleteDC(HDC hdc) {
+	printf("[DeleteDC]\n");
+	return original::DeleteDC(hdc);
+}
+
+BOOL WINAPI DeleteObject(HGDIOBJ ho) {
+	printf("[DeleteObject]\n");
+	return original::DeleteObject(ho);
+}
+
+int WINAPI GetDeviceCaps(HDC hdc, int index) {
+	printf("[GetDeviceCaps]\n");
+	return original::GetDeviceCaps(hdc, index);
+}
+
+HGDIOBJ WINAPI GetStockObject(int i) {
+	printf("[GetStockObject]\n");
+	return original::GetStockObject(i);
+}
+
+UINT WINAPI GetSystemPaletteEntries(HDC hdc, UINT iStart, UINT cEntries, LPPALETTEENTRY pPalEntries) {
+	printf("[GetSystemPaletteEntries]\n");
+	return original::GetSystemPaletteEntries(hdc, iStart, cEntries, pPalEntries);
+}
+
+BOOL APIENTRY GetTextExtentExPointA(HDC hdc, LPCSTR lpszString, int cchString, int nMaxExtent, LPINT lpnFit, LPINT lpnDx, LPSIZE lpSize) {
+	printf("[GetTextExtentExPointA]\n");
+	return original::GetTextExtentExPointA(hdc, lpszString, cchString, nMaxExtent, lpnFit, lpnDx, lpSize);
+}
+
+BOOL APIENTRY GetTextExtentPoint32A(HDC hdc, LPCSTR lpString, int c, LPSIZE psizl) {
+	printf("[GetTextExtentPoint32A]\n");
+	return original::GetTextExtentPoint32A(hdc, lpString, c, psizl);
+}
+
+BOOL WINAPI GdiFlush(void) {
+	printf("[GdiFlush]\n");
+	return original::GdiFlush();
+}
+
+UINT WINAPI RealizePalette(HDC hdc) {
+	printf("[RealizePalette]\n");
+	return original::RealizePalette(hdc);
+}
+
+BOOL WINAPI Rectangle(HDC hdc, int left, int top, int right, int bottom) {
+	printf("[Rectangle]\n");
+	return original::Rectangle(hdc, left, top, right, bottom);
+}
+
+BOOL WINAPI RemoveFontResourceA(LPCSTR lpFileName) {
+	printf("[RemoveFontResourceA]\n");
+	return original::RemoveFontResourceA(lpFileName);
+}
+
+HGDIOBJ WINAPI SelectObject(HDC hdc, HGDIOBJ h) {
+	printf("[SelectObject]\n");
+	return original::SelectObject(hdc, h);
+}
+
+HPALETTE WINAPI SelectPalette(HDC hdc, HPALETTE hPal, BOOL bForceBkgd) {
+	printf("[SelectPalette]\n");
+	return original::SelectPalette(hdc, hPal, bForceBkgd);
+}
+
+COLORREF WINAPI SetBkColor(HDC hdc, COLORREF color) {
+	printf("[SetBkColor]\n");
+	return original::SetBkColor(hdc, color);
+}
+
+int WINAPI SetBkMode(HDC hdc, int mode) {
+	printf("[SetBkMode]\n");
+	return original::SetBkMode(hdc, mode);
+}
+
+int WINAPI SetDIBitsToDevice(HDC hdc, int xDest, int yDest, DWORD w, DWORD h, int xSrc, int ySrc, UINT StartScan, UINT cLines, CONST VOID * lpvBits, CONST BITMAPINFO * lpbmi, UINT ColorUse) {
+	printf("[SetDIBitsToDevice]\n");
+	return original::SetDIBitsToDevice(hdc, xDest, yDest, w, h, xSrc, ySrc, StartScan, cLines, lpvBits, lpbmi, ColorUse);
+}
+
+DWORD WINAPI SetMapperFlags(HDC hdc, DWORD flags) {
+	printf("[SetMapperFlags]\n");
+	return original::SetMapperFlags(hdc, flags);
+}
+
+UINT WINAPI SetPaletteEntries(HPALETTE hpal, UINT iStart, UINT cEntries, CONST PALETTEENTRY *pPalEntries) {
+	printf("[SetPaletteEntries]\n");
+	return original::SetPaletteEntries(hpal, iStart, cEntries, pPalEntries);
+}
+
+COLORREF WINAPI SetTextColor(HDC hdc, COLORREF color) {
+	printf("[SetTextColor]\n");
+	return original::SetTextColor(hdc, color);
+}
+
+BOOL WINAPI TextOutA(HDC hdc, int x, int y, LPCSTR lpString, int c) {
+	printf("[TextOutA]\n");
+	return original::TextOutA(hdc, x, y, lpString, c);
 }
 
 // kernel32.dll
@@ -1143,7 +1293,32 @@ static WrappedFunc s_wrappedFuncs[] = {
 	WRAPPED_FUNC(advapi32.dll, RegSetValueExA),
 	WRAPPED_FUNC(ddraw.dll, DirectDrawCreate),
 	WRAPPED_FUNC(ddraw.dll, DirectDrawEnumerateA),
+	WRAPPED_FUNC(gdi32.dll, AddFontResourceA),
+	WRAPPED_FUNC(gdi32.dll, CreateCompatibleDC),
 	WRAPPED_FUNC(gdi32.dll, CreateDIBSection),
+	WRAPPED_FUNC(gdi32.dll, CreateFontIndirectA),
+	WRAPPED_FUNC(gdi32.dll, CreatePalette),
+	WRAPPED_FUNC(gdi32.dll, CreateScalableFontResourceA),
+	WRAPPED_FUNC(gdi32.dll, DeleteDC),
+	WRAPPED_FUNC(gdi32.dll, DeleteObject),
+	WRAPPED_FUNC(gdi32.dll, GetDeviceCaps),
+	WRAPPED_FUNC(gdi32.dll, GetStockObject),
+	WRAPPED_FUNC(gdi32.dll, GetSystemPaletteEntries),
+	WRAPPED_FUNC(gdi32.dll, GetTextExtentExPointA),
+	WRAPPED_FUNC(gdi32.dll, GetTextExtentPoint32A),
+	WRAPPED_FUNC(gdi32.dll, GdiFlush),
+	WRAPPED_FUNC(gdi32.dll, RealizePalette),
+	WRAPPED_FUNC(gdi32.dll, Rectangle),
+	WRAPPED_FUNC(gdi32.dll, RemoveFontResourceA),
+	WRAPPED_FUNC(gdi32.dll, SelectObject),
+	WRAPPED_FUNC(gdi32.dll, SelectPalette),
+	WRAPPED_FUNC(gdi32.dll, SetBkColor),
+	WRAPPED_FUNC(gdi32.dll, SetBkMode),
+	WRAPPED_FUNC(gdi32.dll, SetDIBitsToDevice),
+	WRAPPED_FUNC(gdi32.dll, SetMapperFlags),
+	WRAPPED_FUNC(gdi32.dll, SetPaletteEntries),
+	WRAPPED_FUNC(gdi32.dll, SetTextColor),
+	WRAPPED_FUNC(gdi32.dll, TextOutA),
 	WRAPPED_FUNC(kernel32.dll, CloseHandle),
 	WRAPPED_FUNC(kernel32.dll, CopyFileA),
 	WRAPPED_FUNC(kernel32.dll, CreateFileA),
