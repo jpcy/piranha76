@@ -331,12 +331,47 @@ HBITMAP (WINAPI *CreateDIBSection)(HDC hdc, CONST BITMAPINFO *pbmi, UINT usage, 
 
 // kernel32.dll
 
+BOOL (WINAPI *CloseHandle)(HANDLE hObject);
+BOOL (WINAPI *CopyFileA)(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, BOOL bFailIfExists);
+HANDLE (WINAPI *CreateFileA)(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
+HANDLE (WINAPI *CreateFileMappingA)(HANDLE hFile, LPSECURITY_ATTRIBUTES lpFileMappingAttributes, DWORD flProtect, DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, LPCSTR lpName);
+BOOL (WINAPI *DeleteFileA)(LPCSTR lpFileName);
+BOOL (WINAPI *FindClose)(HANDLE hFindFile);
+HANDLE (WINAPI *FindFirstFileA)(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData);
+BOOL (WINAPI *FindNextFileA)(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData);
+BOOL (WINAPI *FreeLibrary)(HMODULE hLibModule);
+DWORD (WINAPI *GetCurrentDirectoryA)(DWORD nBufferLength, LPSTR lpBuffer);
+HANDLE (WINAPI *GetCurrentProcess)();
 UINT (WINAPI *GetDriveTypeA)(LPCSTR lpRootPathName);
+BOOL (WINAPI *GetFileTime)(HANDLE hFile, LPFILETIME lpCreationTime, LPFILETIME lpLastAccessTime, LPFILETIME lpLastWriteTime);
 DWORD (WINAPI *GetLogicalDrives)(VOID);
-BOOL (WINAPI *GetVolumeInformationA)(LPCSTR lpRootPathName, LPSTR lpVolumeNameBuffer, DWORD nVolumeNameSize, LPDWORD lpVolumeSerialNumber, LPDWORD lpMaximumComponentLength, LPDWORD lpFileSystemFlags, LPSTR lpFileSystemNameBuffer, DWORD nFileSystemNameSize);
+HMODULE (WINAPI *GetModuleHandleA)(LPCSTR lpModuleName);
+FARPROC (WINAPI *GetProcAddress)(HMODULE hModule, LPCSTR lpProcName);
+HANDLE (WINAPI *GetProcessHeap)();
+DWORD (WINAPI *GetTickCount)();
+VOID (WINAPI *GetStartupInfoA)(LPSTARTUPINFOA lpStartupInfo);
+LCID (WINAPI *GetSystemDefaultLCID)();
 VOID (WINAPI *GetSystemInfo)(LPSYSTEM_INFO lpSystemInfo);
+BOOL (WINAPI *GetVolumeInformationA)(LPCSTR lpRootPathName, LPSTR lpVolumeNameBuffer, DWORD nVolumeNameSize, LPDWORD lpVolumeSerialNumber, LPDWORD lpMaximumComponentLength, LPDWORD lpFileSystemFlags, LPSTR lpFileSystemNameBuffer, DWORD nFileSystemNameSize);
 VOID (WINAPI *GlobalMemoryStatus)(LPMEMORYSTATUS lpBuffer);
+LPVOID (WINAPI *HeapAlloc)(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes);
+SIZE_T (WINAPI *HeapCompact)(HANDLE hHeap, DWORD dwFlags);
+HANDLE (WINAPI *HeapCreate)(DWORD flOptions, SIZE_T dwInitialSize, SIZE_T dwMaximumSize);
+BOOL (WINAPI *HeapDestroy)(HANDLE hHeap);
+BOOL (WINAPI *HeapFree)(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem);
+LPVOID (WINAPI *HeapReAlloc)(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem, SIZE_T dwBytes);
+SIZE_T (WINAPI *HeapSize)(HANDLE hHeap, DWORD dwFlags, LPCVOID lpMem);
+LPSTR (WINAPI *lstrcatA)(LPSTR lpString1, LPCSTR lpString2);
+LPSTR (WINAPI *lstrcpyA)(LPSTR lpString1, LPCSTR lpString2);
 HMODULE (WINAPI *LoadLibraryA)(LPCSTR);
+LPVOID (WINAPI *MapViewOfFile)(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap);
+VOID (WINAPI *OutputDebugStringA)(LPCSTR lpOutputString);
+BOOL (WINAPI *SetFileAttributesA)(LPCSTR lpFileName, DWORD dwFileAttributes);
+BOOL (WINAPI *SetPriorityClass)(HANDLE hProcess, DWORD dwPriorityClass);
+BOOL (WINAPI *UnmapViewOfFile)(LPCVOID lpBaseAddress);
+LPVOID (WINAPI *VirtualAlloc)(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
+BOOL (WINAPI *VirtualFree)(LPVOID lpAddress, SIZE_T dwSize, DWORD dwFreeType);
+SIZE_T (WINAPI *VirtualQuery)(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength);
 
 // strlkup.dll
 
@@ -432,9 +467,11 @@ LSTATUS APIENTRY RegSetValueExA(HKEY hKey, LPCSTR lpValueName, DWORD Reserved, D
 // ddraw.dll
 
 static HRESULT __stdcall EnumDisplayModesCallback(LPDDSURFACEDESC2 Arg1, LPVOID Arg2) {
-	printf("   %ux%u, %u bpp\n", Arg1->dwWidth, Arg1->dwHeight, Arg1->lPitch / Arg1->dwWidth * 8);
+	printf("   %ux%u, %u bpp\n", Arg1->dwWidth, Arg1->dwHeight, Arg1->ddpfPixelFormat.dwRGBBitCount);
+	if (Arg2)
+		printf("      arg2 is not null\n");
 #if FORCE_ENUM_DISPLAY_MODE_16BPP
-	Arg1->lPitch /= 2;
+	// i76 only cares about dwWidth, dwHeight, and this
 	Arg1->ddpfPixelFormat.dwRGBBitCount = 16;
 #endif
 	HRESULT hr = original::ddrawEnumDisplayModes(Arg1, Arg2);
@@ -635,14 +672,104 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *pbmi, UINT usage, VOI
 
 // kernel32.dll
 
+BOOL WINAPI CloseHandle(HANDLE hObject) {
+	printf("[CloseHandle]\n");
+	return original::CloseHandle(hObject);
+}
+
+BOOL WINAPI CopyFileA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, BOOL bFailIfExists) {
+	printf("[CopyFileA] from:'%s', to:'%s'\n", lpExistingFileName, lpNewFileName);
+	return original::CopyFileA(lpExistingFileName, lpNewFileName, bFailIfExists);
+}
+
+HANDLE WINAPI CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {
+	printf("[CreateFileA] '%s'\n", lpFileName);
+	return original::CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+}
+
+HANDLE WINAPI CreateFileMappingA(HANDLE hFile, LPSECURITY_ATTRIBUTES lpFileMappingAttributes, DWORD flProtect, DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, LPCSTR lpName) {
+	printf("[CreateFileMappingA] '%s'\n", lpName);
+	return original::CreateFileMappingA(hFile, lpFileMappingAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName);
+}
+
+BOOL WINAPI DeleteFileA(LPCSTR lpFileName) {
+	printf("[DeleteFileA] '%s'\n", lpFileName);
+	return original::DeleteFileA(lpFileName);
+}
+
+BOOL WINAPI FindClose(HANDLE hFindFile) {
+	printf("[FindClose]\n");
+	return original::FindClose(hFindFile);
+}
+
+HANDLE WINAPI FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData) {
+	printf("[FindFirstFileA] '%s'\n", lpFileName);
+	return original::FindFirstFileA(lpFileName, lpFindFileData);
+}
+
+BOOL WINAPI FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData) {
+	printf("[FindNextFileA]\n");
+	return original::FindNextFileA(hFindFile, lpFindFileData);
+}
+
+BOOL WINAPI FreeLibrary(HMODULE hLibModule) {
+	printf("[FreeLibrary]\n");
+	return original::FreeLibrary(hLibModule);
+}
+
+DWORD WINAPI GetCurrentDirectoryA(DWORD nBufferLength, LPSTR lpBuffer) {
+	printf("[GetCurrentDirectoryA]\n");
+	return original::GetCurrentDirectoryA(nBufferLength, lpBuffer);
+}
+
+HANDLE WINAPI GetCurrentProcess() {
+	printf("[GetCurrentProcess]\n");
+	return original::GetCurrentProcess();
+}
+
 UINT WINAPI GetDriveTypeA(LPCSTR lpRootPathName) {
-	printf("[GetDriveTypeA] root:'%s\n", lpRootPathName);
+	printf("[GetDriveTypeA] root:'%s'\n", lpRootPathName);
 	return original::GetDriveTypeA(lpRootPathName);
 }
 
-DWORD WINAPI GetLogicalDrives(VOID) {
+BOOL WINAPI GetFileTime(HANDLE hFile, LPFILETIME lpCreationTime, LPFILETIME lpLastAccessTime, LPFILETIME lpLastWriteTime) {
+	printf("[GetFileTime]\n");
+	return original::GetFileTime(hFile, lpCreationTime, lpLastAccessTime, lpLastWriteTime);
+}
+
+DWORD WINAPI GetLogicalDrives() {
 	printf("[GetLogicalDrives]\n");
 	return original::GetLogicalDrives();
+}
+
+HMODULE WINAPI GetModuleHandleA(LPCSTR lpModuleName) {
+	printf("[GetModuleHandleA] '%s'\n", lpModuleName);
+	return original::GetModuleHandleA(lpModuleName);
+}
+
+FARPROC WINAPI GetProcAddress(HMODULE hModule, LPCSTR lpProcName) {
+	printf("[GetProcAddress] proc:'%s'\n", lpProcName);
+	return original::GetProcAddress(hModule, lpProcName);
+}
+
+HANDLE WINAPI GetProcessHeap() {
+	printf("[GetProcessHeap]\n");
+	return original::GetProcessHeap();
+}
+
+DWORD WINAPI GetTickCount() {
+	printf("[GetTickCount]\n");
+	return original::GetTickCount();
+}
+
+VOID WINAPI GetStartupInfoA(LPSTARTUPINFOA lpStartupInfo) {
+	printf("[GetStartupInfoA]\n");
+	original::GetStartupInfoA(lpStartupInfo);
+}
+
+LCID WINAPI GetSystemDefaultLCID() {
+	printf("[GetSystemDefaultLCID]\n");
+	return original::GetSystemDefaultLCID();
 }
 
 BOOL WINAPI GetVolumeInformationA(LPCSTR lpRootPathName, LPSTR lpVolumeNameBuffer, DWORD nVolumeNameSize, LPDWORD lpVolumeSerialNumber, LPDWORD lpMaximumComponentLength, LPDWORD lpFileSystemFlags, LPSTR lpFileSystemNameBuffer, DWORD nFileSystemNameSize) {
@@ -662,9 +789,94 @@ VOID WINAPI GlobalMemoryStatus(LPMEMORYSTATUS lpBuffer) {
 	original::GlobalMemoryStatus(lpBuffer);
 }
 
+LPVOID WINAPI HeapAlloc(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes) {
+	printf("[HeapAlloc]\n");
+	return original::HeapAlloc(hHeap, dwFlags, dwBytes);
+}
+
+SIZE_T WINAPI HeapCompact(HANDLE hHeap, DWORD dwFlags) {
+	printf("[HeapCompact]\n");
+	return original::HeapCompact(hHeap, dwFlags);
+}
+
+HANDLE WINAPI HeapCreate(DWORD flOptions, SIZE_T dwInitialSize, SIZE_T dwMaximumSize) {
+	printf("[HeapCreate]\n");
+	return original::HeapCreate(flOptions, dwInitialSize, dwMaximumSize);
+}
+
+BOOL WINAPI HeapDestroy(HANDLE hHeap) {
+	printf("[HeapDestroy]\n");
+	return original::HeapDestroy(hHeap);
+}
+
+BOOL WINAPI HeapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem) {
+	printf("[HeapFree]\n");
+	return original::HeapFree(hHeap, dwFlags, lpMem);
+}
+
+LPVOID WINAPI HeapReAlloc(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem, SIZE_T dwBytes) {
+	printf("[HeapReAlloc]\n");
+	return original::HeapReAlloc(hHeap, dwFlags, lpMem, dwBytes);
+}
+
+SIZE_T WINAPI HeapSize(HANDLE hHeap, DWORD dwFlags, LPCVOID lpMem) {
+	printf("[HeapSize]\n");
+	return original::HeapSize(hHeap, dwFlags, lpMem);
+}
+
+LPSTR WINAPI lstrcatA(LPSTR lpString1, LPCSTR lpString2) {
+	printf("[lstrcatA]\n");
+	return original::lstrcatA(lpString1, lpString2);
+}
+
+LPSTR WINAPI lstrcpyA(LPSTR lpString1, LPCSTR lpString2) {
+	printf("[lstrcpyA]\n");
+	return original::lstrcpyA(lpString1, lpString2);
+}
+
 HMODULE WINAPI LoadLibraryA(LPCSTR lpLibFileName) {
 	printf("[LoadLibraryA] filename:'%s'\n", lpLibFileName);
 	return original::LoadLibraryA(lpLibFileName);
+}
+
+LPVOID WINAPI MapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap) {
+	printf("[MapViewOfFile]\n");
+	return original::MapViewOfFile(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap);
+}
+
+VOID WINAPI OutputDebugStringA(LPCSTR lpOutputString) {
+	printf("[OutputDebugStringA] '%s'\n", lpOutputString);
+	original::OutputDebugStringA(lpOutputString);
+}
+
+BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes) {
+	printf("[SetFileAttributesA] filename:'%s'\n", lpFileName);
+	return original::SetFileAttributesA(lpFileName, dwFileAttributes);
+}
+
+BOOL WINAPI SetPriorityClass(HANDLE hProcess, DWORD dwPriorityClass) {
+	printf("[SetPriorityClass]\n");
+	return original::SetPriorityClass(hProcess, dwPriorityClass);
+}
+
+BOOL WINAPI UnmapViewOfFile(LPCVOID lpBaseAddress) {
+	printf("[UnmapViewOfFile]\n");
+	return original::UnmapViewOfFile(lpBaseAddress);
+}
+
+LPVOID WINAPI VirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect) {
+	printf("[VirtualAlloc]\n");
+	return original::VirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
+}
+
+BOOL WINAPI VirtualFree(LPVOID lpAddress, SIZE_T dwSize, DWORD dwFreeType) {
+	printf("[VirtualFree]\n");
+	return original::VirtualFree(lpAddress, dwSize, dwFreeType);
+}
+
+SIZE_T WINAPI VirtualQuery(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength) {
+	printf("[VirtualQuery]\n");
+	return original::VirtualQuery(lpAddress, lpBuffer, dwLength);
 }
 
 // strlkup.dll
@@ -932,12 +1144,47 @@ static WrappedFunc s_wrappedFuncs[] = {
 	WRAPPED_FUNC(ddraw.dll, DirectDrawCreate),
 	WRAPPED_FUNC(ddraw.dll, DirectDrawEnumerateA),
 	WRAPPED_FUNC(gdi32.dll, CreateDIBSection),
+	WRAPPED_FUNC(kernel32.dll, CloseHandle),
+	WRAPPED_FUNC(kernel32.dll, CopyFileA),
+	WRAPPED_FUNC(kernel32.dll, CreateFileA),
+	WRAPPED_FUNC(kernel32.dll, CreateFileMappingA),
+	WRAPPED_FUNC(kernel32.dll, DeleteFileA),
+	WRAPPED_FUNC(kernel32.dll, FindClose),
+	WRAPPED_FUNC(kernel32.dll, FindFirstFileA),
+	WRAPPED_FUNC(kernel32.dll, FindNextFileA),
+	WRAPPED_FUNC(kernel32.dll, FreeLibrary),
+	WRAPPED_FUNC(kernel32.dll, GetCurrentDirectoryA),
+	WRAPPED_FUNC(kernel32.dll, GetCurrentProcess),
 	WRAPPED_FUNC(kernel32.dll, GetDriveTypeA),
+	WRAPPED_FUNC(kernel32.dll, GetFileTime),
 	WRAPPED_FUNC(kernel32.dll, GetLogicalDrives),
+	WRAPPED_FUNC(kernel32.dll, GetModuleHandleA),
+	WRAPPED_FUNC(kernel32.dll, GetProcAddress),
+	WRAPPED_FUNC(kernel32.dll, GetProcessHeap),
+	WRAPPED_FUNC(kernel32.dll, GetTickCount),
+	WRAPPED_FUNC(kernel32.dll, GetStartupInfoA),
+	WRAPPED_FUNC(kernel32.dll, GetSystemDefaultLCID),
 	WRAPPED_FUNC(kernel32.dll, GetVolumeInformationA),
 	WRAPPED_FUNC(kernel32.dll, GetSystemInfo),
 	WRAPPED_FUNC(kernel32.dll, GlobalMemoryStatus),
+	WRAPPED_FUNC(kernel32.dll, HeapAlloc),
+	WRAPPED_FUNC(kernel32.dll, HeapCompact),
+	WRAPPED_FUNC(kernel32.dll, HeapCreate),
+	WRAPPED_FUNC(kernel32.dll, HeapDestroy),
+	WRAPPED_FUNC(kernel32.dll, HeapFree),
+	WRAPPED_FUNC(kernel32.dll, HeapReAlloc),
+	WRAPPED_FUNC(kernel32.dll, HeapSize),
+	WRAPPED_FUNC(kernel32.dll, lstrcatA),
+	WRAPPED_FUNC(kernel32.dll, lstrcpyA),
 	WRAPPED_FUNC(kernel32.dll, LoadLibraryA),
+	WRAPPED_FUNC(kernel32.dll, MapViewOfFile),
+	WRAPPED_FUNC(kernel32.dll, OutputDebugStringA),
+	WRAPPED_FUNC(kernel32.dll, SetFileAttributesA),
+	WRAPPED_FUNC(kernel32.dll, SetPriorityClass),
+	WRAPPED_FUNC(kernel32.dll, UnmapViewOfFile),
+	WRAPPED_FUNC(kernel32.dll, VirtualAlloc),
+	WRAPPED_FUNC(kernel32.dll, VirtualFree),
+	WRAPPED_FUNC(kernel32.dll, VirtualQuery),
 	WRAPPED_FUNC(strlkup.dll, StrLookupCreate),
 	WRAPPED_FUNC(user32.dll, AdjustWindowRect),
 	WRAPPED_FUNC(user32.dll, BeginPaint),
