@@ -400,7 +400,11 @@ SIZE_T (WINAPI *VirtualQuery)(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuf
 
 // strlkup.dll
 
-void *(*StrLookupCreate)(const char *_filename);
+//void *StrLookup_Global_Object;
+void *(*StrLookupCreate)(char *_filename);
+void (*StrLookupDestroy)(void *_obj);
+char *(*StrLookupFind)(void *_obj, char *_string);
+int (*StrLookupFormat)(char *buffer_, char *_format, ...);
 
 // user32.dll
 
@@ -1031,9 +1035,26 @@ SIZE_T WINAPI VirtualQuery(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer
 
 // strlkup.dll
 
-void *StrLookupCreate(const char *_filename) {
-	printf("[StrLookupCreate] filename:'%s'\n", _filename);
+//void *StrLookup_Global_Object;
+
+void *StrLookupCreate(char *_filename) {
+	printf("[strlkup.dll | StrLookupCreate] filename:'%s'\n", _filename);
 	return original::StrLookupCreate(_filename);
+}
+
+void StrLookupDestroy(void *_obj) {
+	printf("[strlkup.dll | StrLookupDestroy]\n");
+	return original::StrLookupDestroy(_obj);
+}
+
+char *StrLookupFind(void *_obj, char *_string) {
+	printf("[strlkup.dll | StrLookupFind] string:'%s'\n", _string);
+	return original::StrLookupFind(_obj, _string);
+}
+
+int StrLookupFormat(char *buffer_, char *_format, ...) {
+	printf("[strlkup.dll | StrLookupFormat]\n");
+	return original::StrLookupFormat(buffer_, _format);
 }
 
 // user32.dll
@@ -1361,6 +1382,9 @@ static WrappedFunc s_wrappedFuncs[] = {
 	WRAPPED_FUNC(kernel32.dll, VirtualFree),
 	WRAPPED_FUNC(kernel32.dll, VirtualQuery),
 	WRAPPED_FUNC(strlkup.dll, StrLookupCreate),
+	WRAPPED_FUNC(strlkup.dll, StrLookupDestroy),
+	WRAPPED_FUNC(strlkup.dll, StrLookupFind),
+	WRAPPED_FUNC(strlkup.dll, StrLookupFormat),
 	WRAPPED_FUNC(user32.dll, AdjustWindowRect),
 	WRAPPED_FUNC(user32.dll, BeginPaint),
 	WRAPPED_FUNC(user32.dll, ClientToScreen),
