@@ -7,9 +7,20 @@
 
 #define LOG_IMPORTS 0
 #define LOG_VERBOSE 0
+#define LOG_WINPROC 0
 #define FORCE_ENUM_DISPLAY_MODE_16BPP 0
 #define FORCE_1024_RESOLUTION 1
 #define FORCE_WINDOWED 1
+
+static void Logf(const char *_format, ...) {
+	va_list args;
+	va_start(args, _format);
+	char buffer[2048];
+	vsnprintf(buffer, sizeof(buffer), _format, args);
+	va_end(args);
+	printf("%s", buffer);
+	OutputDebugStringA(buffer);
+}
 
 struct MsgName
 {
@@ -294,14 +305,14 @@ static MsgName s_msgNames[] = {
 static void PrintMsg(UINT msg) {
 	for (int i = 0; i < BX_COUNTOF(s_msgNames); i++) {
 		if (msg == s_msgNames[i].id) {
-			printf("%s", s_msgNames[i].name);
+			Logf("%s", s_msgNames[i].name);
 			return;
 		}
 	}
-	printf("%u", msg);
+	Logf("%u", msg);
 }
 
-#define CHECK_HR_RETURN(func) { HRESULT hr = (func); if (hr) printf("   HRESULT: %u\n", hr); return hr; }
+#define CHECK_HR_RETURN(func) { HRESULT hr = (func); if (hr) Logf("   HRESULT: %u\n", hr); return hr; }
 
 namespace data {
 	const char *errorMessage;
@@ -463,49 +474,49 @@ namespace wrap {
 // advapi32.dll
 
 LSTATUS APIENTRY RegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {
-	printf("[advapi32.dll | RegOpenKeyExA] sub key:'%s'\n", lpSubKey);
+	Logf("[advapi32.dll | RegOpenKeyExA] sub key:'%s'\n", lpSubKey);
 	LSTATUS status = original::RegOpenKeyExA(hKey, lpSubKey, ulOptions, samDesired, phkResult);
 	return status;
 }
 
 LSTATUS APIENTRY RegCloseKey(HKEY hKey) {
-	printf("[advapi32.dll | RegCloseKey]\n");
+	Logf("[advapi32.dll | RegCloseKey]\n");
 	//return original::RegCloseKey(hKey);
 	return 0;
 }
 
 LSTATUS APIENTRY RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData) {
-	printf("[advapi32.dll | RegQueryValueExA]\n");
+	Logf("[advapi32.dll | RegQueryValueExA]\n");
 	//return original::RegQueryValueExA(hKey, lpValueName, lpReserved, lpType, lpData, lpcbData);
 	*lpData = 48;
 	return 0;
 }
 
 LSTATUS APIENTRY RegCreateKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition ) {
-	printf("[advapi32.dll | RegCreateKeyExA] sub key:'%s'\n", lpSubKey);
+	Logf("[advapi32.dll | RegCreateKeyExA] sub key:'%s'\n", lpSubKey);
 	LSTATUS status = original::RegCreateKeyExA(hKey, lpSubKey, Reserved, lpClass, dwOptions, samDesired, lpSecurityAttributes, phkResult, lpdwDisposition);
 	return 0;
 	//return status;
 }
 
 LSTATUS APIENTRY RegSetValueExA(HKEY hKey, LPCSTR lpValueName, DWORD Reserved, DWORD dwType, const BYTE* lpData, DWORD cbData) {
-	printf("[advapi32.dll | RegSetValueExA]\n");
+	Logf("[advapi32.dll | RegSetValueExA]\n");
 	return original::RegSetValueExA(hKey, lpValueName, Reserved, dwType, lpData, cbData);
 }
 
 // ddraw.dll
 
 static HRESULT __stdcall EnumDisplayModesCallback(LPDDSURFACEDESC2 Arg1, LPVOID Arg2) {
-	printf("   %ux%u, %u bpp\n", Arg1->dwWidth, Arg1->dwHeight, Arg1->ddpfPixelFormat.dwRGBBitCount);
+	Logf("   %ux%u, %u bpp\n", Arg1->dwWidth, Arg1->dwHeight, Arg1->ddpfPixelFormat.dwRGBBitCount);
 	if (Arg2)
-		printf("      arg2 is not null\n");
+		Logf("      arg2 is not null\n");
 #if FORCE_ENUM_DISPLAY_MODE_16BPP
 	// i76 only cares about dwWidth, dwHeight, and this
 	Arg1->ddpfPixelFormat.dwRGBBitCount = 16;
 #endif
 	HRESULT hr = original::ddrawEnumDisplayModes(Arg1, Arg2);
 	if (hr != DDENUMRET_OK)
-		printf("      cancel enumeration\n");
+		Logf("      cancel enumeration\n");
 	return hr;
 }
 
@@ -513,110 +524,110 @@ struct CustomIDirectDraw
 {
 	/*** IUnknown methods ***/
 	virtual __declspec(nothrow) HRESULT __stdcall QueryInterface(REFIID riid, LPVOID FAR * ppvObj) {
-		printf("[IDirectDraw::QueryInterface]\n");
+		Logf("[IDirectDraw::QueryInterface]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->QueryInterface(riid, ppvObj));
 	}
 
 	virtual __declspec(nothrow) ULONG __stdcall AddRef() {
-		printf("[IDirectDraw::AddRef]\n");
+		Logf("[IDirectDraw::AddRef]\n");
 		return original::directDrawInterface->AddRef();
 	}
 
 	virtual __declspec(nothrow) ULONG __stdcall Release() {
-		printf("[IDirectDraw::Release]\n");
+		Logf("[IDirectDraw::Release]\n");
 		return original::directDrawInterface->Release();
 	}
 
 	/*** IDirectDraw methods ***/
 	virtual __declspec(nothrow) HRESULT __stdcall Compact() {
-		printf("[IDirectDraw::Compact]\n");
+		Logf("[IDirectDraw::Compact]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->Compact());
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall CreateClipper(DWORD arg1, LPDIRECTDRAWCLIPPER FAR* arg2, IUnknown FAR * arg3) {
-		printf("[IDirectDraw::CreateClipper]\n");
+		Logf("[IDirectDraw::CreateClipper]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->CreateClipper(arg1, arg2, arg3));
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall CreatePalette(DWORD arg1, LPPALETTEENTRY arg2, LPDIRECTDRAWPALETTE FAR* arg3, IUnknown FAR * arg4) {
-		printf("[IDirectDraw::CreatePalette]\n");
+		Logf("[IDirectDraw::CreatePalette]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->CreatePalette(arg1, arg2, arg3, arg4));
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall CreateSurface(LPDDSURFACEDESC2 arg1, LPDIRECTDRAWSURFACE7 FAR *arg2, IUnknown FAR *arg3) {
-		printf("[IDirectDraw::CreateSurface]\n");
+		Logf("[IDirectDraw::CreateSurface]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->CreateSurface(arg1, arg2, arg3));
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall DuplicateSurface(LPDIRECTDRAWSURFACE7 arg1, LPDIRECTDRAWSURFACE7 FAR * arg2) {
-		printf("[IDirectDraw::DuplicateSurface]\n");
+		Logf("[IDirectDraw::DuplicateSurface]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->DuplicateSurface(arg1, arg2));
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall EnumDisplayModes(DWORD arg1, LPDDSURFACEDESC2 arg2, LPVOID arg3, LPDDENUMMODESCALLBACK2 arg4) {
-		printf("[IDirectDraw::EnumDisplayModes]\n");
+		Logf("[IDirectDraw::EnumDisplayModes]\n");
 		original::ddrawEnumDisplayModes = arg4;
 		CHECK_HR_RETURN(original::directDrawInterface->EnumDisplayModes(arg1, arg2, arg3, EnumDisplayModesCallback));
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall EnumSurfaces(DWORD arg1, LPDDSURFACEDESC2 arg2, LPVOID arg3, LPDDENUMSURFACESCALLBACK7 arg4) {
-		printf("[IDirectDraw::EnumSurfaces]\n");
+		Logf("[IDirectDraw::EnumSurfaces]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->EnumSurfaces(arg1, arg2, arg3, arg4));
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall FlipToGDISurface() {
-		printf("[IDirectDraw::FlipToGDISurface]\n");
+		Logf("[IDirectDraw::FlipToGDISurface]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->FlipToGDISurface());
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall GetCaps(LPDDCAPS arg1, LPDDCAPS arg2) {
-		printf("[IDirectDraw::GetCaps]\n");
+		Logf("[IDirectDraw::GetCaps]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->GetCaps(arg1, arg2));
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall GetDisplayMode(LPDDSURFACEDESC2 arg1) {
-		printf("[IDirectDraw::GetDisplayMode]\n");
+		Logf("[IDirectDraw::GetDisplayMode]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->GetDisplayMode(arg1));
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall GetFourCCCodes(LPDWORD arg1, LPDWORD arg2) {
-		printf("[IDirectDraw::GetFourCCCodes]\n");
+		Logf("[IDirectDraw::GetFourCCCodes]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->GetFourCCCodes(arg1, arg2));
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall GetGDISurface(LPDIRECTDRAWSURFACE7 FAR *arg1) {
-		printf("[IDirectDraw::GetGDISurface]\n");
+		Logf("[IDirectDraw::GetGDISurface]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->GetGDISurface(arg1));
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall GetMonitorFrequency(LPDWORD arg1) {
-		printf("[IDirectDraw::GetMonitorFrequency]\n");
+		Logf("[IDirectDraw::GetMonitorFrequency]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->GetMonitorFrequency(arg1));
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall GetScanLine(LPDWORD arg1) {
-		printf("[IDirectDraw::GetScanLine]\n");
+		Logf("[IDirectDraw::GetScanLine]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->GetScanLine(arg1));
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall GetVerticalBlankStatus(LPBOOL arg1) {
-		printf("[IDirectDraw::GetVerticalBlankStatus]\n");
+		Logf("[IDirectDraw::GetVerticalBlankStatus]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->GetVerticalBlankStatus(arg1));
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall Initialize(GUID FAR *arg1) {
-		printf("[IDirectDraw::Initialize]\n");
+		Logf("[IDirectDraw::Initialize]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->Initialize(arg1));
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall RestoreDisplayMode() {
-		printf("[IDirectDraw::RestoreDisplayMode]\n");
+		Logf("[IDirectDraw::RestoreDisplayMode]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->RestoreDisplayMode());
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall SetCooperativeLevel(HWND arg1, DWORD arg2) {
 		// 17 = DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE
-		printf("[IDirectDraw::SetCooperativeLevel value:%u]\n", arg2);
+		Logf("[IDirectDraw::SetCooperativeLevel value:%u]\n", arg2);
 #if FORCE_WINDOWED
 		CHECK_HR_RETURN(original::directDrawInterface->SetCooperativeLevel(arg1, DDSCL_NORMAL));
 #else
@@ -625,49 +636,49 @@ struct CustomIDirectDraw
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall SetDisplayMode(DWORD arg1, DWORD arg2, DWORD arg3, DWORD arg4, DWORD arg5) {
-		printf("[IDirectDraw::SetDisplayMode]\n");
+		Logf("[IDirectDraw::SetDisplayMode]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->SetDisplayMode(arg1, arg2, arg3, arg4, arg5));
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall WaitForVerticalBlank(DWORD arg1, HANDLE arg2) {
-		printf("[IDirectDraw::WaitForVerticalBlank]\n");
+		Logf("[IDirectDraw::WaitForVerticalBlank]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->WaitForVerticalBlank(arg1, arg2));
 	}
 
 	/*** Added in the v2 interface ***/
 	virtual __declspec(nothrow) HRESULT __stdcall GetAvailableVidMem(LPDDSCAPS2 arg1, LPDWORD arg2, LPDWORD arg3) {
-		printf("[IDirectDraw::GetAvailableVidMem]\n");
+		Logf("[IDirectDraw::GetAvailableVidMem]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->GetAvailableVidMem(arg1, arg2, arg3));
 	}
 
 	/*** Added in the V4 Interface ***/
 	virtual __declspec(nothrow) HRESULT __stdcall GetSurfaceFromDC(HDC arg1, LPDIRECTDRAWSURFACE7 *arg2) {
-		printf("[IDirectDraw::GetSurfaceFromDC]\n");
+		Logf("[IDirectDraw::GetSurfaceFromDC]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->GetSurfaceFromDC(arg1, arg2));
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall RestoreAllSurfaces() {
-		printf("[IDirectDraw::RestoreAllSurfaces]\n");
+		Logf("[IDirectDraw::RestoreAllSurfaces]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->RestoreAllSurfaces());
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall TestCooperativeLevel() {
-		printf("[IDirectDraw::TestCooperativeLevel]\n");
+		Logf("[IDirectDraw::TestCooperativeLevel]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->TestCooperativeLevel());
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall GetDeviceIdentifier(LPDDDEVICEIDENTIFIER2 arg1, DWORD arg2) {
-		printf("[IDirectDraw::GetDeviceIdentifier]\n");
+		Logf("[IDirectDraw::GetDeviceIdentifier]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->GetDeviceIdentifier(arg1, arg2));
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall StartModeTest(LPSIZE arg1, DWORD arg2, DWORD arg3) {
-		printf("[IDirectDraw::StartModeTest]\n");
+		Logf("[IDirectDraw::StartModeTest]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->StartModeTest(arg1, arg2, arg3));
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall EvaluateMode(DWORD arg1, DWORD * arg2) {
-		printf("[IDirectDraw::EvaluateMode]\n");
+		Logf("[IDirectDraw::EvaluateMode]\n");
 		CHECK_HR_RETURN(original::directDrawInterface->EvaluateMode(arg1, arg2));
 	}
 };
@@ -675,10 +686,10 @@ struct CustomIDirectDraw
 static CustomIDirectDraw *directDrawInterface = nullptr;
 
 HRESULT WINAPI DirectDrawCreate(GUID *lpGUID, LPDIRECTDRAW *lplpDD, IUnknown *pUnkOuter) {
-	printf("[ddraw.dll | DirectDrawCreate]\n");
+	Logf("[ddraw.dll | DirectDrawCreate]\n");
 	HRESULT hr = original::DirectDrawCreate((GUID *)DDCREATE_EMULATIONONLY, lplpDD, pUnkOuter);
 	if (hr)
-		printf("HRESULT: %u\n", hr);
+		Logf("HRESULT: %u\n", hr);
 #if 1
 	original::directDrawInterface = (LPDIRECTDRAW7)*lplpDD;
 	directDrawInterface = new CustomIDirectDraw();
@@ -688,348 +699,352 @@ HRESULT WINAPI DirectDrawCreate(GUID *lpGUID, LPDIRECTDRAW *lplpDD, IUnknown *pU
 }
 
 HRESULT WINAPI DirectDrawEnumerateA(LPDDENUMCALLBACKA lpCallback, LPVOID lpContext) {
-	printf("[ddraw.dll | DirectDrawEnumerateA]\n");
+	Logf("[ddraw.dll | DirectDrawEnumerateA]\n");
 	CHECK_HR_RETURN(original::DirectDrawEnumerateA(lpCallback, lpContext));
 }
 
 // gdi32.dll
 
 int WINAPI AddFontResourceA(LPCSTR Arg1) {
-	printf("[gdi32.dll | AddFontResourceA]\n");
+	Logf("[gdi32.dll | AddFontResourceA]\n");
 	return original::AddFontResourceA(Arg1);
 }
 
 HDC WINAPI CreateCompatibleDC(HDC hdc) {
-	printf("[gdi32.dll | CreateCompatibleDC]\n");
+	Logf("[gdi32.dll | CreateCompatibleDC]\n");
 	return original::CreateCompatibleDC(hdc);
 }
 
 HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *pbmi, UINT usage, VOID **ppvBits, HANDLE hSection, DWORD offset) {
-	printf("[gdi32.dll | CreateDIBSection]\n");
+	Logf("[gdi32.dll | CreateDIBSection]\n");
 	return original::CreateDIBSection(hdc, pbmi, usage, ppvBits, hSection, offset);
 }
 
 HFONT WINAPI CreateFontIndirectA(LOGFONTA *lplf) {
-	printf("[gdi32.dll | CreateFontIndirectA]\n");
+	Logf("[gdi32.dll | CreateFontIndirectA]\n");
 	return original::CreateFontIndirectA(lplf);
 }
 
 HPALETTE WINAPI CreatePalette(CONST LOGPALETTE * plpal) {
-	printf("[gdi32.dll | CreatePalette]\n");
+	Logf("[gdi32.dll | CreatePalette]\n");
 	return original::CreatePalette(plpal);
 }
 
 BOOL WINAPI CreateScalableFontResourceA(DWORD fdwHidden, LPCSTR lpszFont, LPCSTR lpszFile, LPCSTR lpszPath) {
-	printf("[gdi32.dll | CreateScalableFontResourceA]\n");
+	Logf("[gdi32.dll | CreateScalableFontResourceA]\n");
 	return original::CreateScalableFontResourceA(fdwHidden, lpszFont, lpszFile, lpszPath);
 }
 
 BOOL WINAPI DeleteDC(HDC hdc) {
-	printf("[gdi32.dll | DeleteDC]\n");
+	Logf("[gdi32.dll | DeleteDC]\n");
 	return original::DeleteDC(hdc);
 }
 
 BOOL WINAPI DeleteObject(HGDIOBJ ho) {
-	printf("[gdi32.dll | DeleteObject]\n");
+	Logf("[gdi32.dll | DeleteObject]\n");
 	return original::DeleteObject(ho);
 }
 
 int WINAPI GetDeviceCaps(HDC hdc, int index) {
-	printf("[gdi32.dll | GetDeviceCaps]\n");
+	Logf("[gdi32.dll | GetDeviceCaps]\n");
 	return original::GetDeviceCaps(hdc, index);
 }
 
 HGDIOBJ WINAPI GetStockObject(int i) {
-	printf("[gdi32.dll | GetStockObject]\n");
+	Logf("[gdi32.dll | GetStockObject]\n");
 	return original::GetStockObject(i);
 }
 
 UINT WINAPI GetSystemPaletteEntries(HDC hdc, UINT iStart, UINT cEntries, LPPALETTEENTRY pPalEntries) {
-	printf("[gdi32.dll | GetSystemPaletteEntries]\n");
+	Logf("[gdi32.dll | GetSystemPaletteEntries]\n");
 	return original::GetSystemPaletteEntries(hdc, iStart, cEntries, pPalEntries);
 }
 
 BOOL APIENTRY GetTextExtentExPointA(HDC hdc, LPCSTR lpszString, int cchString, int nMaxExtent, LPINT lpnFit, LPINT lpnDx, LPSIZE lpSize) {
-	printf("[gdi32.dll | GetTextExtentExPointA]\n");
+	Logf("[gdi32.dll | GetTextExtentExPointA]\n");
 	return original::GetTextExtentExPointA(hdc, lpszString, cchString, nMaxExtent, lpnFit, lpnDx, lpSize);
 }
 
 BOOL APIENTRY GetTextExtentPoint32A(HDC hdc, LPCSTR lpString, int c, LPSIZE psizl) {
-	printf("[gdi32.dll | GetTextExtentPoint32A]\n");
+	Logf("[gdi32.dll | GetTextExtentPoint32A]\n");
 	return original::GetTextExtentPoint32A(hdc, lpString, c, psizl);
 }
 
 BOOL WINAPI GdiFlush(void) {
-	printf("[gdi32.dll | GdiFlush]\n");
+	Logf("[gdi32.dll | GdiFlush]\n");
 	return original::GdiFlush();
 }
 
 UINT WINAPI RealizePalette(HDC hdc) {
-	printf("[gdi32.dll | RealizePalette]\n");
+	Logf("[gdi32.dll | RealizePalette]\n");
 	return original::RealizePalette(hdc);
 }
 
 BOOL WINAPI Rectangle(HDC hdc, int left, int top, int right, int bottom) {
-	printf("[gdi32.dll | Rectangle]\n");
+	Logf("[gdi32.dll | Rectangle]\n");
 	return original::Rectangle(hdc, left, top, right, bottom);
 }
 
 BOOL WINAPI RemoveFontResourceA(LPCSTR lpFileName) {
-	printf("[gdi32.dll | RemoveFontResourceA]\n");
+	Logf("[gdi32.dll | RemoveFontResourceA]\n");
 	return original::RemoveFontResourceA(lpFileName);
 }
 
 HGDIOBJ WINAPI SelectObject(HDC hdc, HGDIOBJ h) {
-	printf("[gdi32.dll | SelectObject]\n");
+	Logf("[gdi32.dll | SelectObject]\n");
 	return original::SelectObject(hdc, h);
 }
 
 HPALETTE WINAPI SelectPalette(HDC hdc, HPALETTE hPal, BOOL bForceBkgd) {
-	printf("[gdi32.dll | SelectPalette]\n");
+	Logf("[gdi32.dll | SelectPalette]\n");
 	return original::SelectPalette(hdc, hPal, bForceBkgd);
 }
 
 COLORREF WINAPI SetBkColor(HDC hdc, COLORREF color) {
-	printf("[gdi32.dll | SetBkColor]\n");
+	Logf("[gdi32.dll | SetBkColor]\n");
 	return original::SetBkColor(hdc, color);
 }
 
 int WINAPI SetBkMode(HDC hdc, int mode) {
-	printf("[gdi32.dll | SetBkMode]\n");
+	Logf("[gdi32.dll | SetBkMode]\n");
 	return original::SetBkMode(hdc, mode);
 }
 
 int WINAPI SetDIBitsToDevice(HDC hdc, int xDest, int yDest, DWORD w, DWORD h, int xSrc, int ySrc, UINT StartScan, UINT cLines, CONST VOID * lpvBits, CONST BITMAPINFO * lpbmi, UINT ColorUse) {
-	printf("[gdi32.dll | SetDIBitsToDevice]\n");
+	Logf("[gdi32.dll | SetDIBitsToDevice]\n");
 	return original::SetDIBitsToDevice(hdc, xDest, yDest, w, h, xSrc, ySrc, StartScan, cLines, lpvBits, lpbmi, ColorUse);
 }
 
 DWORD WINAPI SetMapperFlags(HDC hdc, DWORD flags) {
-	printf("[gdi32.dll | SetMapperFlags]\n");
+	Logf("[gdi32.dll | SetMapperFlags]\n");
 	return original::SetMapperFlags(hdc, flags);
 }
 
 UINT WINAPI SetPaletteEntries(HPALETTE hpal, UINT iStart, UINT cEntries, CONST PALETTEENTRY *pPalEntries) {
-	printf("[gdi32.dll | SetPaletteEntries]\n");
+	Logf("[gdi32.dll | SetPaletteEntries]\n");
 	return original::SetPaletteEntries(hpal, iStart, cEntries, pPalEntries);
 }
 
 COLORREF WINAPI SetTextColor(HDC hdc, COLORREF color) {
-	printf("[gdi32.dll | SetTextColor]\n");
+	Logf("[gdi32.dll | SetTextColor]\n");
 	return original::SetTextColor(hdc, color);
 }
 
 BOOL WINAPI TextOutA(HDC hdc, int x, int y, LPCSTR lpString, int c) {
-	printf("[gdi32.dll | TextOutA]\n");
+	Logf("[gdi32.dll | TextOutA]\n");
 	return original::TextOutA(hdc, x, y, lpString, c);
 }
 
 // kernel32.dll
 
 BOOL WINAPI CloseHandle(HANDLE hObject) {
-	printf("[kernel32.dll | CloseHandle]\n");
+	Logf("[kernel32.dll | CloseHandle]\n");
 	return original::CloseHandle(hObject);
 }
 
 BOOL WINAPI CopyFileA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, BOOL bFailIfExists) {
-	printf("[kernel32.dll | CopyFileA] from:'%s', to:'%s'\n", lpExistingFileName, lpNewFileName);
+	Logf("[kernel32.dll | CopyFileA] from:'%s', to:'%s'\n", lpExistingFileName, lpNewFileName);
 	return original::CopyFileA(lpExistingFileName, lpNewFileName, bFailIfExists);
 }
 
 HANDLE WINAPI CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {
-	printf("[kernel32.dll | CreateFileA] '%s'\n", lpFileName);
+	Logf("[kernel32.dll | CreateFileA] '%s'\n", lpFileName);
 	return original::CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 }
 
 HANDLE WINAPI CreateFileMappingA(HANDLE hFile, LPSECURITY_ATTRIBUTES lpFileMappingAttributes, DWORD flProtect, DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, LPCSTR lpName) {
-	printf("[kernel32.dll | CreateFileMappingA] '%s'\n", lpName);
+	Logf("[kernel32.dll | CreateFileMappingA] '%s'\n", lpName);
 	return original::CreateFileMappingA(hFile, lpFileMappingAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName);
 }
 
 BOOL WINAPI DeleteFileA(LPCSTR lpFileName) {
-	printf("[kernel32.dll | DeleteFileA] '%s'\n", lpFileName);
+	Logf("[kernel32.dll | DeleteFileA] '%s'\n", lpFileName);
 	return original::DeleteFileA(lpFileName);
 }
 
 BOOL WINAPI FindClose(HANDLE hFindFile) {
-	printf("[kernel32.dll | FindClose]\n");
+	Logf("[kernel32.dll | FindClose]\n");
 	return original::FindClose(hFindFile);
 }
 
 HANDLE WINAPI FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData) {
-	printf("[kernel32.dll | FindFirstFileA] '%s'\n", lpFileName);
+	Logf("[kernel32.dll | FindFirstFileA] '%s'\n", lpFileName);
 	return original::FindFirstFileA(lpFileName, lpFindFileData);
 }
 
 BOOL WINAPI FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData) {
-	printf("[kernel32.dll | FindNextFileA]\n");
+	Logf("[kernel32.dll | FindNextFileA]\n");
 	return original::FindNextFileA(hFindFile, lpFindFileData);
 }
 
 BOOL WINAPI FreeLibrary(HMODULE hLibModule) {
-	printf("[kernel32.dll | FreeLibrary]\n");
+	Logf("[kernel32.dll | FreeLibrary]\n");
 	return original::FreeLibrary(hLibModule);
 }
 
 DWORD WINAPI GetCurrentDirectoryA(DWORD nBufferLength, LPSTR lpBuffer) {
-	printf("[kernel32.dll | GetCurrentDirectoryA]\n");
+	Logf("[kernel32.dll | GetCurrentDirectoryA]\n");
 	return original::GetCurrentDirectoryA(nBufferLength, lpBuffer);
 }
 
 HANDLE WINAPI GetCurrentProcess() {
-	printf("[kernel32.dll | GetCurrentProcess]\n");
+	Logf("[kernel32.dll | GetCurrentProcess]\n");
 	return original::GetCurrentProcess();
 }
 
 UINT WINAPI GetDriveTypeA(LPCSTR lpRootPathName) {
-	printf("[kernel32.dll | GetDriveTypeA] root:'%s'\n", lpRootPathName);
+	Logf("[kernel32.dll | GetDriveTypeA] root:'%s'\n", lpRootPathName);
 	return original::GetDriveTypeA(lpRootPathName);
 }
 
 BOOL WINAPI GetFileTime(HANDLE hFile, LPFILETIME lpCreationTime, LPFILETIME lpLastAccessTime, LPFILETIME lpLastWriteTime) {
-	printf("[kernel32.dll | GetFileTime]\n");
+	Logf("[kernel32.dll | GetFileTime]\n");
 	return original::GetFileTime(hFile, lpCreationTime, lpLastAccessTime, lpLastWriteTime);
 }
 
 DWORD WINAPI GetLogicalDrives() {
-	printf("[kernel32.dll | GetLogicalDrives]\n");
+	Logf("[kernel32.dll | GetLogicalDrives]\n");
 	return original::GetLogicalDrives();
 }
 
 HMODULE WINAPI GetModuleHandleA(LPCSTR lpModuleName) {
-	printf("[kernel32.dll | GetModuleHandleA] '%s'\n", lpModuleName);
+	Logf("[kernel32.dll | GetModuleHandleA] '%s'\n", lpModuleName);
 	return original::GetModuleHandleA(lpModuleName);
 }
 
 FARPROC WINAPI GetProcAddress(HMODULE hModule, LPCSTR lpProcName) {
-	printf("[kernel32.dll | GetProcAddress] proc:'%s'\n", lpProcName);
+	Logf("[kernel32.dll | GetProcAddress] proc:'%s'\n", lpProcName);
 	return original::GetProcAddress(hModule, lpProcName);
 }
 
 HANDLE WINAPI GetProcessHeap() {
-	printf("[kernel32.dll | GetProcessHeap]\n");
+	Logf("[kernel32.dll | GetProcessHeap]\n");
 	return original::GetProcessHeap();
 }
 
 DWORD WINAPI GetTickCount() {
-	printf("[kernel32.dll | GetTickCount]\n");
+	Logf("[kernel32.dll | GetTickCount]\n");
 	return original::GetTickCount();
 }
 
 VOID WINAPI GetStartupInfoA(LPSTARTUPINFOA lpStartupInfo) {
-	printf("[kernel32.dll | GetStartupInfoA]\n");
+	Logf("[kernel32.dll | GetStartupInfoA]\n");
 	original::GetStartupInfoA(lpStartupInfo);
 }
 
 LCID WINAPI GetSystemDefaultLCID() {
-	printf("[kernel32.dll | GetSystemDefaultLCID]\n");
+	Logf("[kernel32.dll | GetSystemDefaultLCID]\n");
 	return original::GetSystemDefaultLCID();
 }
 
 BOOL WINAPI GetVolumeInformationA(LPCSTR lpRootPathName, LPSTR lpVolumeNameBuffer, DWORD nVolumeNameSize, LPDWORD lpVolumeSerialNumber, LPDWORD lpMaximumComponentLength, LPDWORD lpFileSystemFlags, LPSTR lpFileSystemNameBuffer, DWORD nFileSystemNameSize) {
-	printf("[kernel32.dll | GetVolumeInformationA]\n");
+	Logf("[kernel32.dll | GetVolumeInformationA]\n");
 	return original::GetVolumeInformationA(lpRootPathName, lpVolumeNameBuffer, nVolumeNameSize, lpVolumeSerialNumber, lpMaximumComponentLength, lpFileSystemFlags, lpFileSystemNameBuffer, nFileSystemNameSize);
 }
 
 VOID WINAPI GetSystemInfo(LPSYSTEM_INFO lpSystemInfo) {
-	printf("[kernel32.dll | GetSystemInfo]\n");
+	Logf("[kernel32.dll | GetSystemInfo]\n");
 	original::GetSystemInfo(lpSystemInfo);
 	// 386, 486 or 586 will result in call to _disable() which throws an exception
 	lpSystemInfo->dwProcessorType = 0;
 }
 
 VOID WINAPI GlobalMemoryStatus(LPMEMORYSTATUS lpBuffer) {
-	printf("[kernel32.dll | GlobalMemoryStatus]\n");
+	Logf("[kernel32.dll | GlobalMemoryStatus]\n");
 	original::GlobalMemoryStatus(lpBuffer);
 }
 
 LPVOID WINAPI HeapAlloc(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes) {
-	printf("[kernel32.dll | HeapAlloc]\n");
+#if LOG_VERBOSE
+	Logf("[kernel32.dll | HeapAlloc]\n");
+#endif
 	return original::HeapAlloc(hHeap, dwFlags, dwBytes);
 }
 
 SIZE_T WINAPI HeapCompact(HANDLE hHeap, DWORD dwFlags) {
-	printf("[kernel32.dll | HeapCompact]\n");
+	Logf("[kernel32.dll | HeapCompact]\n");
 	return original::HeapCompact(hHeap, dwFlags);
 }
 
 HANDLE WINAPI HeapCreate(DWORD flOptions, SIZE_T dwInitialSize, SIZE_T dwMaximumSize) {
-	printf("[kernel32.dll | HeapCreate]\n");
+	Logf("[kernel32.dll | HeapCreate]\n");
 	return original::HeapCreate(flOptions, dwInitialSize, dwMaximumSize);
 }
 
 BOOL WINAPI HeapDestroy(HANDLE hHeap) {
-	printf("[kernel32.dll | HeapDestroy]\n");
+	Logf("[kernel32.dll | HeapDestroy]\n");
 	return original::HeapDestroy(hHeap);
 }
 
 BOOL WINAPI HeapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem) {
-	printf("[kernel32.dll | HeapFree]\n");
+#if LOG_VERBOSE
+	Logf("[kernel32.dll | HeapFree]\n");
+#endif
 	return original::HeapFree(hHeap, dwFlags, lpMem);
 }
 
 LPVOID WINAPI HeapReAlloc(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem, SIZE_T dwBytes) {
-	printf("[kernel32.dll | HeapReAlloc]\n");
+	Logf("[kernel32.dll | HeapReAlloc]\n");
 	return original::HeapReAlloc(hHeap, dwFlags, lpMem, dwBytes);
 }
 
 SIZE_T WINAPI HeapSize(HANDLE hHeap, DWORD dwFlags, LPCVOID lpMem) {
-	printf("[kernel32.dll | HeapSize]\n");
+	Logf("[kernel32.dll | HeapSize]\n");
 	return original::HeapSize(hHeap, dwFlags, lpMem);
 }
 
 LPSTR WINAPI lstrcatA(LPSTR lpString1, LPCSTR lpString2) {
-	printf("[kernel32.dll | lstrcatA]\n");
+	Logf("[kernel32.dll | lstrcatA]\n");
 	return original::lstrcatA(lpString1, lpString2);
 }
 
 LPSTR WINAPI lstrcpyA(LPSTR lpString1, LPCSTR lpString2) {
-	printf("[kernel32.dll | lstrcpyA]\n");
+	Logf("[kernel32.dll | lstrcpyA]\n");
 	return original::lstrcpyA(lpString1, lpString2);
 }
 
 HMODULE WINAPI LoadLibraryA(LPCSTR lpLibFileName) {
-	printf("[kernel32.dll | LoadLibraryA] filename:'%s'\n", lpLibFileName);
+	Logf("[kernel32.dll | LoadLibraryA] filename:'%s'\n", lpLibFileName);
 	return original::LoadLibraryA(lpLibFileName);
 }
 
 LPVOID WINAPI MapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap) {
-	printf("[kernel32.dll | MapViewOfFile]\n");
+	Logf("[kernel32.dll | MapViewOfFile]\n");
 	return original::MapViewOfFile(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap);
 }
 
 VOID WINAPI OutputDebugStringA(LPCSTR lpOutputString) {
-	printf("[kernel32.dll | OutputDebugStringA] '%s'\n", lpOutputString);
+	Logf("[kernel32.dll | OutputDebugStringA] '%s'\n", lpOutputString);
 	original::OutputDebugStringA(lpOutputString);
 }
 
 BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes) {
-	printf("[kernel32.dll | SetFileAttributesA] filename:'%s'\n", lpFileName);
+	Logf("[kernel32.dll | SetFileAttributesA] filename:'%s'\n", lpFileName);
 	return original::SetFileAttributesA(lpFileName, dwFileAttributes);
 }
 
 BOOL WINAPI SetPriorityClass(HANDLE hProcess, DWORD dwPriorityClass) {
-	printf("[kernel32.dll | SetPriorityClass]\n");
+	Logf("[kernel32.dll | SetPriorityClass]\n");
 	return original::SetPriorityClass(hProcess, dwPriorityClass);
 }
 
 BOOL WINAPI UnmapViewOfFile(LPCVOID lpBaseAddress) {
-	printf("[kernel32.dll | UnmapViewOfFile]\n");
+	Logf("[kernel32.dll | UnmapViewOfFile]\n");
 	return original::UnmapViewOfFile(lpBaseAddress);
 }
 
 LPVOID WINAPI VirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect) {
-	printf("[kernel32.dll | VirtualAlloc]\n");
+	Logf("[kernel32.dll | VirtualAlloc]\n");
 	return original::VirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
 }
 
 BOOL WINAPI VirtualFree(LPVOID lpAddress, SIZE_T dwSize, DWORD dwFreeType) {
-	printf("[kernel32.dll | VirtualFree]\n");
+	Logf("[kernel32.dll | VirtualFree]\n");
 	return original::VirtualFree(lpAddress, dwSize, dwFreeType);
 }
 
 SIZE_T WINAPI VirtualQuery(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength) {
-	printf("[kernel32.dll | VirtualQuery]\n");
+	Logf("[kernel32.dll | VirtualQuery]\n");
 	return original::VirtualQuery(lpAddress, lpBuffer, dwLength);
 }
 
@@ -1038,120 +1053,124 @@ SIZE_T WINAPI VirtualQuery(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer
 //void *StrLookup_Global_Object;
 
 void *StrLookupCreate(char *_filename) {
-	printf("[strlkup.dll | StrLookupCreate] filename:'%s'\n", _filename);
+	Logf("[strlkup.dll | StrLookupCreate] filename:'%s'\n", _filename);
 	return original::StrLookupCreate(_filename);
 }
 
 void StrLookupDestroy(void *_obj) {
-	printf("[strlkup.dll | StrLookupDestroy]\n");
+	Logf("[strlkup.dll | StrLookupDestroy]\n");
 	return original::StrLookupDestroy(_obj);
 }
 
 char *StrLookupFind(void *_obj, char *_string) {
-	printf("[strlkup.dll | StrLookupFind] string:'%s'\n", _string);
+	Logf("[strlkup.dll | StrLookupFind] string:'%s'\n", _string);
 	return original::StrLookupFind(_obj, _string);
 }
 
 int StrLookupFormat(char *buffer_, char *_format, ...) {
-	printf("[strlkup.dll | StrLookupFormat]\n");
+	Logf("[strlkup.dll | StrLookupFormat]\n");
 	return original::StrLookupFormat(buffer_, _format);
 }
 
 // user32.dll
 
 BOOL WINAPI AdjustWindowRect(LPRECT lpRect, DWORD dwStyle, BOOL bMenu) {
-	printf("[user32.dll | AdjustWindowRect]\n");
+	Logf("[user32.dll | AdjustWindowRect]\n");
 	return original::AdjustWindowRect(lpRect, dwStyle, bMenu);
 }
 
 HDC WINAPI BeginPaint(HWND hWnd, LPPAINTSTRUCT lpPaint) {
-	printf("[user32.dll | BeginPaint]\n");
+	Logf("[user32.dll | BeginPaint]\n");
 	return original::BeginPaint(hWnd, lpPaint);
 }
 
 BOOL WINAPI ClientToScreen(HWND hWnd, LPPOINT lpPoint) {
-	printf("[user32.dll | ClientToScreen]\n");
+	Logf("[user32.dll | ClientToScreen]\n");
 	return original::ClientToScreen(hWnd, lpPoint);
 }
 
 BOOL WINAPI ClipCursor(CONST RECT *lpRect) {
-	printf("[user32.dll | ClipCursor]");
+	Logf("[user32.dll | ClipCursor]");
 	if (lpRect)
-		printf(" left:%d, right:%d, top:%d, bottom:%d\n", lpRect->left, lpRect->right, lpRect->top, lpRect->bottom);
+		Logf(" left:%d, right:%d, top:%d, bottom:%d\n", lpRect->left, lpRect->right, lpRect->top, lpRect->bottom);
 	else
-		printf("\n");
+		Logf("\n");
 	return original::ClipCursor(lpRect);
 }
 
 HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam) {
-	printf("[user32.dll | CreateWindowExA] classname:'%s', window name:'%s', width:%d, height:%d\n", lpClassName, lpWindowName, nWidth, nHeight);
+	Logf("[user32.dll | CreateWindowExA] classname:'%s', window name:'%s', width:%d, height:%d\n", lpClassName, lpWindowName, nWidth, nHeight);
 	return original::CreateWindowExA(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
 }
 
 LRESULT WINAPI DefWindowProcA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
-	printf("[user32.dll | DefWindowProcA] msg:");
+#if LOG_VERBOSE
+	Logf("[user32.dll | DefWindowProcA] msg:");
 	PrintMsg(Msg);
-	printf("\n");
+	Logf("\n");
+#endif
 	return original::DefWindowProcA(hWnd, Msg, wParam, lParam);
 }
 
 BOOL WINAPI DestroyWindow(HWND hWnd) {
-	printf("[user32.dll | DestroyWindow]\n");
+	Logf("[user32.dll | DestroyWindow]\n");
 	return original::DestroyWindow(hWnd);
 }
 
 LRESULT WINAPI DispatchMessageA(CONST MSG *lpMsg) {
-	printf("[user32.dll | DispatchMessageA]\n");
+#if LOG_VERBOSE
+	Logf("[user32.dll | DispatchMessageA]\n");
+#endif
 	return original::DispatchMessageA(lpMsg);
 }
 
 BOOL WINAPI EndPaint(HWND hWnd, CONST PAINTSTRUCT *lpPaint) {
-	printf("[user32.dll | EndPaint]\n");
+	Logf("[user32.dll | EndPaint]\n");
 	return original::EndPaint(hWnd, lpPaint);
 }
 
 HWND WINAPI FindWindowA(LPCSTR lpClassName, LPCSTR lpWindowName) {
-	printf("[user32.dll | FindWindowA] classname:'%s', window name:'%s'\n", lpClassName, lpWindowName);
+	Logf("[user32.dll | FindWindowA] classname:'%s', window name:'%s'\n", lpClassName, lpWindowName);
 	return original::FindWindowA(lpClassName, lpWindowName);
 }
 
 SHORT WINAPI GetAsyncKeyState(int vKey) {
-	printf("[user32.dll | GetAsyncKeyState] key:%d\n", vKey);
+	Logf("[user32.dll | GetAsyncKeyState] key:%d\n", vKey);
 	return original::GetAsyncKeyState(vKey);
 }
 
 BOOL WINAPI GetClientRect(HWND hWnd, LPRECT lpRect) {
-	printf("[user32.dll | GetClientRect]\n");
+	Logf("[user32.dll | GetClientRect]\n");
 	return original::GetClientRect(hWnd, lpRect);
 }
 
 BOOL WINAPI GetCursorPos(LPPOINT lpPoint) {
-	printf("[user32.dll | GetCursorPos]\n");
+	Logf("[user32.dll | GetCursorPos]\n");
 	return original::GetCursorPos(lpPoint);
 }
 
 HDC WINAPI GetDC(HWND hWnd) {
-	printf("[user32.dll | GetDC]\n");
+	Logf("[user32.dll | GetDC]\n");
 	return original::GetDC(hWnd);
 }
 
 HWND WINAPI GetFocus(VOID) {
-	printf("[user32.dll | GetFocus]\n");
+	Logf("[user32.dll | GetFocus]\n");
 	return original::GetFocus();
 }
 
 int WINAPI GetKeyboardType(int nTypeFlag) {
-	printf("[user32.dll | GetKeyboardType]\n");
+	Logf("[user32.dll | GetKeyboardType]\n");
 	return original::GetKeyboardType(nTypeFlag);
 }
 
 SHORT WINAPI GetKeyState(int nVirtKey) {
-	printf("[user32.dll | GetKeyState] key:%d\n", nVirtKey);
+	Logf("[user32.dll | GetKeyState] key:%d\n", nVirtKey);
 	return original::GetKeyState(nVirtKey);
 }
 
 int WINAPI GetSystemMetrics(int nIndex) {
-	printf("[user32.dll | GetSystemMetrics] nIndex:%d\n", nIndex);
+	Logf("[user32.dll | GetSystemMetrics] nIndex:%d\n", nIndex);
 #if FORCE_1024_RESOLUTION
 	if (nIndex == SM_CXSCREEN)
 		return 1024;
@@ -1162,135 +1181,139 @@ int WINAPI GetSystemMetrics(int nIndex) {
 }
 
 BOOL WINAPI GetWindowRect(HWND hWnd, LPRECT lpRect) {
-	printf("[user32.dll | GetWindowRect\n");
+	Logf("[user32.dll | GetWindowRect\n");
 	return original::GetWindowRect(hWnd, lpRect);
 }
 
 HCURSOR WINAPI LoadCursorA(HINSTANCE hInstance, LPCSTR lpCursorName) {
-	printf("[user32.dll | LoadCursorA]\n");
+	Logf("[user32.dll | LoadCursorA]\n");
 	return original::LoadCursorA(hInstance, lpCursorName);
 }
 
 UINT WINAPI MapVirtualKeyA(UINT uCode, UINT uMapType) {
-	printf("[user32.dll | MapVirtualKeyA]\n");
+	Logf("[user32.dll | MapVirtualKeyA]\n");
 	return original::MapVirtualKeyA(uCode, uMapType);
 }
 
 int WINAPI MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
-	printf("[user32.dll | MessageBoxA] text:'%s' caption:'%s'\n", lpText, lpCaption);
+	Logf("[user32.dll | MessageBoxA] text:'%s' caption:'%s'\n", lpText, lpCaption);
 	return original::MessageBoxA(hWnd, lpText, lpCaption, uType);
 }
 
 BOOL WINAPI PeekMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg) {
 #if LOG_VERBOSE
-	printf("[user32.dll | PeekMessageA]\n");
+	Logf("[user32.dll | PeekMessageA]\n");
 #endif
 	return original::PeekMessageA(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg);
 }
 
 static LRESULT __stdcall WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-	printf("   WNDPROC msg:");
+#if LOG_WINPROC
+	Logf("   WNDPROC msg:");
 	PrintMsg(uMsg);
-	printf("\n");
+	Logf("\n");
+#endif
 	return original::windowProc(hWnd, uMsg, wParam, lParam);
 }
 
 ATOM WINAPI RegisterClassA(CONST WNDCLASSA *lpWndClass) {
 	original::windowProc = lpWndClass->lpfnWndProc;
 	((WNDCLASSA *)lpWndClass)->lpfnWndProc = WindowProc;
-	printf("[user32.dll | RegisterClassA] name:%s\n", lpWndClass->lpszClassName);
+	Logf("[user32.dll | RegisterClassA] name:%s\n", lpWndClass->lpszClassName);
 	return original::RegisterClassA(lpWndClass);
 }
 
 int WINAPI ReleaseDC(HWND hWnd, HDC hDC) {
-	printf("[user32.dll | ReleaseDC]\n");
+	Logf("[user32.dll | ReleaseDC]\n");
 	return original::ReleaseDC(hWnd, hDC);
 }
 
 BOOL WINAPI ScreenToClient(HWND hWnd, LPPOINT lpPoint) {
-	printf("[user32.dll | ScreenToClient] x:%d, y:%d\n", lpPoint->x, lpPoint->y);
+	Logf("[user32.dll | ScreenToClient] x:%d, y:%d\n", lpPoint->x, lpPoint->y);
 	return original::ScreenToClient(hWnd, lpPoint);
 }
 
 LRESULT WINAPI SendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
-	printf("[user32.dll | SendMessageA]\n");
+	Logf("[user32.dll | SendMessageA]\n");
 	return original::SendMessageA(hWnd, Msg, wParam, lParam);
 }
 
 HCURSOR WINAPI SetCursor(HCURSOR hCursor) {
-	printf("[user32.dll | SetCursor]\n");
+	Logf("[user32.dll | SetCursor]\n");
 	return original::SetCursor(hCursor);
 }
 
 BOOL WINAPI SetCursorPos(int X, int Y) {
-	printf("[user32.dll | SetCursorPos] x:%d, y:%d\n", X, Y);
+	Logf("[user32.dll | SetCursorPos] x:%d, y:%d\n", X, Y);
 	return original::SetCursorPos(X, Y);
 }
 
 HWND WINAPI SetFocus(HWND hWnd) {
-	printf("[user32.dll | SetFocus]\n");
+	Logf("[user32.dll | SetFocus]\n");
 	return original::SetFocus(hWnd);
 }
 
 BOOL WINAPI SetMenu(HWND hWnd, HMENU hMenu) {
-	printf("[user32.dll | SetMenu]\n");
+	Logf("[user32.dll | SetMenu]\n");
 	return original::SetMenu(hWnd, hMenu);
 }
 
 BOOL WINAPI SetRect(LPRECT lprc, int xLeft, int yTop, int xRight,int yBottom) {
-	printf("[user32.dll | SetRect]\n");
+	Logf("[user32.dll | SetRect]\n");
 	return original::SetRect(lprc, xLeft, yTop, xRight, yBottom);
 }
 
 LONG WINAPI SetWindowLongA(HWND hWnd, int nIndex, LONG dwNewLong) {
-	printf("[user32.dll | SetWindowLongA]\n");
+	Logf("[user32.dll | SetWindowLongA]\n");
 	return original::SetWindowLongA(hWnd, nIndex, dwNewLong);
 }
 
 BOOL WINAPI SetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags) {
-	printf("[user32.dll | SetWindowPos]\n");
+	Logf("[user32.dll | SetWindowPos]\n");
 	return original::SetWindowPos(hWnd, hWndInsertAfter, X, Y, cx, cy, uFlags);
 }
 
 int WINAPI ShowCursor(BOOL bShow) {
-	printf("[user32.dll | ShowCursor] value:%s\n", bShow ? "true" : "false");
+	Logf("[user32.dll | ShowCursor] value:%s\n", bShow ? "true" : "false");
 	return original::ShowCursor(bShow);
 }
 
 BOOL WINAPI ShowWindow(HWND hWnd, int nCmdShow) {
-	printf("[user32.dll | ShowWindow]\n");
+	Logf("[user32.dll | ShowWindow]\n");
 	return original::ShowWindow(hWnd, nCmdShow);
 }
 
 BOOL WINAPI TranslateMessage(CONST MSG *lpMsg) {
-	printf("[user32.dll | TranslateMessage]\n");
+#if LOG_VERBOSE
+	Logf("[user32.dll | TranslateMessage]\n");
+#endif
 	return original::TranslateMessage(lpMsg);
 }
 
 BOOL WINAPI UpdateWindow(HWND hWnd) {
-	printf("[user32.dll | UpdateWindow]\n");
+	Logf("[user32.dll | UpdateWindow]\n");
 	return original::UpdateWindow(hWnd);
 }
 
 BOOL WINAPI ValidateRect(HWND hWnd, CONST RECT *lpRect) {
-	printf("[user32.dll | ValidateRect]\n");
+	Logf("[user32.dll | ValidateRect]\n");
 	return original::ValidateRect(hWnd, lpRect);
 }
 
 int WINAPIV wsprintfA(LPSTR, LPCSTR, ...) {
-	printf("[user32.dll | wsprintfA]\n");
+	Logf("[user32.dll | wsprintfA]\n");
 	return 0;
 }
 
 int WINAPI wvsprintfA(LPSTR, LPCSTR, va_list arglist) {
-	printf("[user32.dll | wvsprintfA]\n");
+	Logf("[user32.dll | wvsprintfA]\n");
 	return 0;
 }
 
 // win32.dll
 
 MCIERROR WINAPI mciSendCommandA(MCIDEVICEID mciId, UINT uMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2) {
-	printf("[win32.dll | mciSendCommandA]\n");
+	Logf("[win32.dll | mciSendCommandA]\n");
 	return original::mciSendCommandA(mciId, uMsg, dwParam1, dwParam2);
 }
 
@@ -1463,7 +1486,7 @@ static Symbol s_smackSymbols[] = {
 
 static HCUSTOMMODULE customLoadLibrary(LPCSTR _filename, void * /*_userData*/) {
 #if LOG_IMPORTS
-	printf("Load library %s\n", _filename);
+	Logf("Load library %s\n", _filename);
 #endif
 	Library lib;
 	bx::strCopy(lib.name, sizeof(lib.name), _filename);
@@ -1490,7 +1513,7 @@ static FARPROC customGetProcAddress(HCUSTOMMODULE _lib, LPCSTR _proc, void * /*_
 		}
 	}
 #if LOG_IMPORTS
-	printf("   symbol %s", _proc);
+	Logf("   symbol %s", _proc);
 #endif
 	auto result = (FARPROC)bx::dlsym(_lib, _proc);
 	if (!result) {
@@ -1502,13 +1525,13 @@ static FARPROC customGetProcAddress(HCUSTOMMODULE _lib, LPCSTR _proc, void * /*_
 			*wrap.original = result;
 			result = (FARPROC)wrap.wrap;
 #if LOG_IMPORTS
-			printf(" (wrapped)");
+			Logf(" (wrapped)");
 #endif
 			break;
 		}
 	}
 #if LOG_IMPORTS
-	printf("\n");
+	Logf("\n");
 #endif
 	return result;
 }
