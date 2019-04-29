@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <bx/bx.h>
+#include <bx/string.h>
 #include <ddraw.h>
 #include "MemoryModule.h"
 #include "main.h"
+#include "i76shell.h"
 
 namespace i76 {
 namespace data {
@@ -607,6 +609,8 @@ HMODULE WINAPI GetModuleHandleA(LPCSTR lpModuleName) {
 
 FARPROC WINAPI GetProcAddress(HMODULE hModule, LPCSTR lpProcName) {
 	Logf("[i76.exe | kernel32.dll | GetProcAddress] proc:'%s'\n", lpProcName);
+	if (i76shell::IsModule(hModule))
+		return i76shell::GetProcAddress(lpProcName);
 	return original::GetProcAddress(hModule, lpProcName);
 }
 
@@ -698,6 +702,8 @@ LPSTR WINAPI lstrcpyA(LPSTR lpString1, LPCSTR lpString2) {
 
 HMODULE WINAPI LoadLibraryA(LPCSTR lpLibFileName) {
 	Logf("[i76.exe | kernel32.dll | LoadLibraryA] filename:'%s'\n", lpLibFileName);
+	if (bx::strCmpI(lpLibFileName, I76SHELL_DLL) == 0)
+		return i76shell::Load();
 	return original::LoadLibraryA(lpLibFileName);
 }
 
@@ -1175,11 +1181,13 @@ bool Load() {
 	userData.wrappedFuncs = ArrayView<WrappedFunc>(s_wrappedFuncs, BX_COUNTOF(s_wrappedFuncs));
 	HMEMORYMODULE module = CustomMemoryLoadLibrary(fileData, fileLength, &userData);
 	if (!module) {
-		fprintf(stderr, "MemoryLoadLibraryEx failed\n");
-		return 1;
+		fprintf(stderr, "MemoryLoadLibraryEx failed for %s\n", filename);
+		return false;
 	}
+	Logf("Loaded %s\n", filename);
 	data::errorMessage = (const char *)(0x005FDB00);
 	MemoryCallEntryPoint(module);
+	return true;
 }
 
 } // namespace i76
