@@ -31,6 +31,31 @@ UINT (WINAPI *SetPaletteEntries)(HPALETTE hpal, UINT iStart, UINT cEntries, CONS
 UINT (WINAPI *SetSystemPaletteUse)(HDC hdc, UINT use);
 BOOL (WINAPI *StretchBlt)(HDC hdcDest, int xDest, int yDest, int wDest, int hDest, HDC hdcSrc, int xSrc, int ySrc, int wSrc, int hSrc, DWORD rop);
 
+// kernel32.dll
+
+BOOL (WINAPI *CloseHandle)(HANDLE hObject);
+BOOL (WINAPI *CopyFileA)(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, BOOL bFailIfExists);
+HANDLE (WINAPI *CreateFileA)(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
+BOOL (WINAPI *CreateProcessA)(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+HANDLE (WINAPI *CreateThread)(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId);
+BOOL (WINAPI *DisableThreadLibraryCalls)(HMODULE hLibModule);
+UINT (WINAPI *GetDriveTypeA)(LPCSTR lpRootPathName);
+DWORD (WINAPI *GetLastError)();
+DWORD (WINAPI *GetLogicalDriveStringsA)(DWORD nBufferLength, LPSTR lpBuffer);
+DWORD (WINAPI *GetTickCount)();
+UINT (WINAPI *GetWindowsDirectoryA)(LPSTR lpBuffer, UINT uSize);
+LPVOID (WINAPI *HeapAlloc)(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes);
+HANDLE (WINAPI *HeapCreate)(DWORD flOptions, SIZE_T dwInitialSize, SIZE_T dwMaximumSize);
+BOOL (WINAPI *HeapDestroy)(HANDLE hHeap);
+BOOL (WINAPI *HeapFree)(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem);
+LPVOID (WINAPI *HeapReAlloc)(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem, SIZE_T dwBytes);
+DWORD (WINAPI *LoadModule)(LPCSTR lpModuleName, LPVOID lpParameterBlock);
+VOID (WINAPI *OutputDebugStringA)(LPCSTR lpOutputString);
+BOOL (WINAPI *QueryPerformanceCounter)(LARGE_INTEGER* lpPerformanceCount);
+BOOL (WINAPI *ReadFile)(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
+VOID (WINAPI *Sleep)(DWORD dwMilliseconds);
+DWORD (WINAPI *WaitForSingleObject)(HANDLE hHandle, DWORD dwMilliseconds);
+
 } // namespace original
 
 namespace wrap {
@@ -130,6 +155,122 @@ BOOL WINAPI StretchBlt(HDC hdcDest, int xDest, int yDest, int wDest, int hDest, 
 	return original::StretchBlt(hdcDest, xDest, yDest, wDest, hDest, hdcSrc, xSrc, ySrc, wSrc, hSrc, rop);
 }
 
+// kernel32.dll
+
+BOOL WINAPI CloseHandle(HANDLE hObject) {
+	Logf("[" I76SHELL_DLL " | kernel32.dll | CloseHandle]\n");
+	return original::CloseHandle(hObject);
+}
+
+BOOL WINAPI CopyFileA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, BOOL bFailIfExists) {
+	Logf("[" I76SHELL_DLL " | kernel32.dll | CopyFileA] from:'%s', to:'%s'\n", lpExistingFileName, lpNewFileName);
+	return original::CopyFileA(lpExistingFileName, lpNewFileName, bFailIfExists);
+}
+
+HANDLE WINAPI CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {
+	Logf("[" I76SHELL_DLL " | kernel32.dll | CreateFileA] '%s'\n", lpFileName);
+	return original::CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+}
+
+BOOL WINAPI CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation) {
+	Logf("[" I76SHELL_DLL " | kernel32.dll | CreateProcessA] app:'%s'\n", lpApplicationName);
+	return original::CreateProcessA(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+}
+
+HANDLE WINAPI CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId) {
+	Logf("[" I76SHELL_DLL " | kernel32.dll | CreateThread]\n");
+	return original::CreateThread(lpThreadAttributes, dwStackSize, lpStartAddress, lpParameter, dwCreationFlags, lpThreadId);
+}
+
+BOOL WINAPI DisableThreadLibraryCalls(HMODULE hLibModule) {
+	Logf("[" I76SHELL_DLL " | kernel32.dll | DisableThreadLibraryCalls]\n");
+	return original::DisableThreadLibraryCalls(hLibModule);
+}
+
+UINT WINAPI GetDriveTypeA(LPCSTR lpRootPathName) {
+	Logf("[" I76SHELL_DLL " | kernel32.dll | GetDriveTypeA] root:'%s'\n", lpRootPathName);
+	return original::GetDriveTypeA(lpRootPathName);
+}
+
+DWORD WINAPI GetLastError() {
+	Logf("[" I76SHELL_DLL " | kernel32.dll | GetLastError]\n");
+	return original::GetLastError();
+}
+
+DWORD WINAPI GetLogicalDriveStringsA(DWORD nBufferLength, LPSTR lpBuffer) {
+	Logf("[" I76SHELL_DLL " | kernel32.dll | GetLogicalDriveStringsA]\n");
+	return original::GetLogicalDriveStringsA(nBufferLength, lpBuffer);
+}
+
+DWORD WINAPI GetTickCount() {
+	Logf("[" I76SHELL_DLL " | kernel32.dll | GetTickCount]\n");
+	return original::GetTickCount();
+}
+
+UINT WINAPI GetWindowsDirectoryA(LPSTR lpBuffer, UINT uSize) {
+	Logf("[" I76SHELL_DLL " | kernel32.dll | GetWindowsDirectoryA]\n");
+	return original::GetWindowsDirectoryA(lpBuffer, uSize);
+}
+
+LPVOID WINAPI HeapAlloc(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes) {
+#if LOG_VERBOSE
+	Logf("[" I76SHELL_DLL " | kernel32.dll | HeapAlloc]\n");
+#endif
+	return original::HeapAlloc(hHeap, dwFlags, dwBytes);
+}
+
+HANDLE WINAPI HeapCreate(DWORD flOptions, SIZE_T dwInitialSize, SIZE_T dwMaximumSize) {
+	Logf("[" I76SHELL_DLL " | kernel32.dll | HeapCreate]\n");
+	return original::HeapCreate(flOptions, dwInitialSize, dwMaximumSize);
+}
+
+BOOL WINAPI HeapDestroy(HANDLE hHeap) {
+	Logf("[" I76SHELL_DLL " | kernel32.dll | HeapDestroy]\n");
+	return original::HeapDestroy(hHeap);
+}
+
+BOOL WINAPI HeapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem) {
+#if LOG_VERBOSE
+	Logf("[" I76SHELL_DLL " | kernel32.dll | HeapFree]\n");
+#endif
+	return original::HeapFree(hHeap, dwFlags, lpMem);
+}
+
+LPVOID WINAPI HeapReAlloc(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem, SIZE_T dwBytes) {
+	Logf("[" I76SHELL_DLL " | kernel32.dll | HeapReAlloc]\n");
+	return original::HeapReAlloc(hHeap, dwFlags, lpMem, dwBytes);
+}
+
+DWORD WINAPI LoadModule(LPCSTR lpModuleName, LPVOID lpParameterBlock) {
+	Logf("[" I76SHELL_DLL " | kernel32.dll | LoadModule]\n");
+	return original::LoadModule(lpModuleName, lpParameterBlock);
+}
+
+VOID WINAPI OutputDebugStringA(LPCSTR lpOutputString) {
+	Logf("[" I76SHELL_DLL " | kernel32.dll | OutputDebugStringA] '%s'\n", lpOutputString);
+	original::OutputDebugStringA(lpOutputString);
+}
+
+BOOL WINAPI QueryPerformanceCounter(LARGE_INTEGER* lpPerformanceCount) {
+	Logf("[" I76SHELL_DLL " | kernel32.dll | QueryPerformanceCounter]\n");
+	return original::QueryPerformanceCounter(lpPerformanceCount);
+}
+
+BOOL WINAPI ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped) {
+	Logf("[" I76SHELL_DLL " | kernel32.dll | ReadFile]\n");
+	return original::ReadFile(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
+}
+
+VOID WINAPI Sleep(DWORD dwMilliseconds) {
+	Logf("[" I76SHELL_DLL " | kernel32.dll | Sleep] %u ms\n", dwMilliseconds);
+	original::Sleep(dwMilliseconds);
+}
+
+DWORD WINAPI WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
+	Logf("[" I76SHELL_DLL " | kernel32.dll | WaitForSingleObject]\n");
+	return original::WaitForSingleObject(hHandle, dwMilliseconds);
+}
+
 } // namespace wrap
 
 static WrappedFunc s_wrappedFuncs[] = {
@@ -150,7 +291,29 @@ static WrappedFunc s_wrappedFuncs[] = {
 	WRAPPED_FUNC(gdi32.dll, SetDIBColorTable),
 	WRAPPED_FUNC(gdi32.dll, SetPaletteEntries),
 	WRAPPED_FUNC(gdi32.dll, SetSystemPaletteUse),
-	WRAPPED_FUNC(gdi32.dll, StretchBlt)
+	WRAPPED_FUNC(gdi32.dll, StretchBlt),
+	WRAPPED_FUNC(kernel32.dll, CloseHandle),
+	WRAPPED_FUNC(kernel32.dll, CopyFileA),
+	WRAPPED_FUNC(kernel32.dll, CreateFileA),
+	WRAPPED_FUNC(kernel32.dll, CreateProcessA),
+	WRAPPED_FUNC(kernel32.dll, CreateThread),
+	WRAPPED_FUNC(kernel32.dll, DisableThreadLibraryCalls),
+	WRAPPED_FUNC(kernel32.dll, GetDriveTypeA),
+	WRAPPED_FUNC(kernel32.dll, GetLastError),
+	WRAPPED_FUNC(kernel32.dll, GetLogicalDriveStringsA),
+	WRAPPED_FUNC(kernel32.dll, GetTickCount),
+	WRAPPED_FUNC(kernel32.dll, GetWindowsDirectoryA),
+	WRAPPED_FUNC(kernel32.dll, HeapAlloc),
+	WRAPPED_FUNC(kernel32.dll, HeapCreate),
+	WRAPPED_FUNC(kernel32.dll, HeapDestroy),
+	WRAPPED_FUNC(kernel32.dll, HeapFree),
+	WRAPPED_FUNC(kernel32.dll, HeapReAlloc),
+	WRAPPED_FUNC(kernel32.dll, LoadModule),
+	WRAPPED_FUNC(kernel32.dll, OutputDebugStringA),
+	WRAPPED_FUNC(kernel32.dll, QueryPerformanceCounter),
+	WRAPPED_FUNC(kernel32.dll, ReadFile),
+	WRAPPED_FUNC(kernel32.dll, Sleep),
+	WRAPPED_FUNC(kernel32.dll, WaitForSingleObject)
 };
 
 static MemoryModuleUserData s_memoryModuleUserData;
