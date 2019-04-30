@@ -11,6 +11,17 @@ namespace data {
 
 const char *errorMessage;
 
+struct DisplayMode
+{
+	uint32_t width;
+	uint32_t height;
+	uint32_t bpp;
+	uint32_t zero;
+};
+
+uint32_t *numDisplayModes;
+DisplayMode *displayModes; // length: 50
+
 }
 
 namespace original {
@@ -209,10 +220,20 @@ static HRESULT __stdcall EnumDisplayModesCallback(LPDDSURFACEDESC2 Arg1, LPVOID 
 	// i76 only cares about dwWidth, dwHeight, and this
 	Arg1->ddpfPixelFormat.dwRGBBitCount = 16;
 #endif
+#if 1
+	data::DisplayMode &mode = data::displayModes[*data::numDisplayModes];
+	mode.width = Arg1->dwWidth;
+	mode.height = Arg1->dwHeight;
+	mode.bpp = Arg1->ddpfPixelFormat.dwRGBBitCount;
+	mode.zero = 0;
+	(*data::numDisplayModes)++;
+	return DDENUMRET_OK;
+#else
 	HRESULT hr = original::ddrawEnumDisplayModes(Arg1, Arg2);
 	if (hr != DDENUMRET_OK)
 		Logf("      cancel enumeration\n");
 	return hr;
+#endif
 }
 
 struct CustomIDirectDraw
@@ -330,9 +351,12 @@ struct CustomIDirectDraw
 #endif
 	}
 
-	virtual __declspec(nothrow) HRESULT __stdcall SetDisplayMode(DWORD arg1, DWORD arg2, DWORD arg3, DWORD arg4, DWORD arg5) {
-		Logf("[i76.exe | IDirectDraw::SetDisplayMode]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->SetDisplayMode(arg1, arg2, arg3, arg4, arg5));
+	// https://docs.microsoft.com/en-us/windows/desktop/api/ddraw/nf-ddraw-idirectdraw7-setdisplaymode
+	// "As part of the prior-version IDirectDraw interface, this method did not include the dwRefreshRate and dwFlags parameters."
+	//virtual __declspec(nothrow) HRESULT __stdcall SetDisplayMode(DWORD width, DWORD height, DWORD bpp, DWORD refreshRate, DWORD flags) {
+	virtual __declspec(nothrow) HRESULT __stdcall SetDisplayMode(DWORD width, DWORD height, DWORD bpp) {
+		Logf("[i76.exe | IDirectDraw::SetDisplayMode] width:%u, height:%u, bpp:%u\n", width, height, bpp);
+		CHECK_HR_RETURN(original::directDrawInterface->SetDisplayMode(width, height, bpp, 60, 0));
 	}
 
 	virtual __declspec(nothrow) HRESULT __stdcall WaitForVerticalBlank(DWORD arg1, HANDLE arg2) {
@@ -382,7 +406,7 @@ static CustomIDirectDraw *directDrawInterface = nullptr;
 
 HRESULT WINAPI DirectDrawCreate(GUID *lpGUID, LPDIRECTDRAW *lplpDD, IUnknown *pUnkOuter) {
 	Logf("[i76.exe | ddraw.dll | DirectDrawCreate]\n");
-	HRESULT hr = original::DirectDrawCreate((GUID *)DDCREATE_EMULATIONONLY, lplpDD, pUnkOuter);
+	HRESULT hr = original::DirectDrawCreate(lpGUID, lplpDD, pUnkOuter);
 	if (hr)
 		Logf("HRESULT: %u\n", hr);
 #if 1
@@ -691,12 +715,12 @@ SIZE_T WINAPI HeapSize(HANDLE hHeap, DWORD dwFlags, LPCVOID lpMem) {
 }
 
 LPSTR WINAPI lstrcatA(LPSTR lpString1, LPCSTR lpString2) {
-	Logf("[i76.exe | kernel32.dll | lstrcatA]\n");
+	Logf("[i76.exe | kernel32.dll | lstrcatA] '%s' '%s'\n", lpString1, lpString2);
 	return original::lstrcatA(lpString1, lpString2);
 }
 
 LPSTR WINAPI lstrcpyA(LPSTR lpString1, LPCSTR lpString2) {
-	Logf("[i76.exe | kernel32.dll | lstrcpyA]\n");
+	Logf("[i76.exe | kernel32.dll | lstrcpyA] '%s'\n", lpString2);
 	return original::lstrcpyA(lpString1, lpString2);
 }
 
@@ -999,14 +1023,14 @@ BOOL WINAPI ValidateRect(HWND hWnd, CONST RECT *lpRect) {
 	return original::ValidateRect(hWnd, lpRect);
 }
 
-int WINAPIV wsprintfA(LPSTR, LPCSTR, ...) {
+int WINAPIV wsprintfA(LPSTR arg1, LPCSTR arg2, ...) {
 	Logf("[i76.exe | user32.dll | wsprintfA]\n");
 	return 0;
 }
 
-int WINAPI wvsprintfA(LPSTR, LPCSTR, va_list arglist) {
+int WINAPI wvsprintfA(LPSTR arg1, LPCSTR arg2, va_list arglist) {
 	Logf("[i76.exe | user32.dll | wvsprintfA]\n");
-	return 0;
+	return original::wvsprintfA(arg1, arg2, arglist);
 }
 
 // win32.dll
@@ -1186,6 +1210,8 @@ bool Load() {
 	}
 	Logf("Loaded %s\n", filename);
 	data::errorMessage = (const char *)(0x005FDB00);
+	data::numDisplayModes = (uint32_t *)(0x006080D8);
+	data::displayModes = (data::DisplayMode	 *)(0x006080E0);
 	MemoryCallEntryPoint(module);
 	return true;
 }
