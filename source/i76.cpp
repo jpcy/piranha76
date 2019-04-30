@@ -608,7 +608,9 @@ DWORD WINAPI GetCurrentDirectoryA(DWORD nBufferLength, LPSTR lpBuffer) {
 }
 
 HANDLE WINAPI GetCurrentProcess() {
+#if LOG_VERBOSE
 	Logf("[i76.exe | kernel32.dll | GetCurrentProcess]\n");
+#endif
 	return original::GetCurrentProcess();
 }
 
@@ -688,17 +690,23 @@ LPVOID WINAPI HeapAlloc(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes) {
 }
 
 SIZE_T WINAPI HeapCompact(HANDLE hHeap, DWORD dwFlags) {
+#if LOG_VERBOSE
 	Logf("[i76.exe | kernel32.dll | HeapCompact]\n");
+#endif
 	return original::HeapCompact(hHeap, dwFlags);
 }
 
 HANDLE WINAPI HeapCreate(DWORD flOptions, SIZE_T dwInitialSize, SIZE_T dwMaximumSize) {
+#if LOG_VERBOSE
 	Logf("[i76.exe | kernel32.dll | HeapCreate]\n");
+#endif
 	return original::HeapCreate(flOptions, dwInitialSize, dwMaximumSize);
 }
 
 BOOL WINAPI HeapDestroy(HANDLE hHeap) {
+#if LOG_VERBOSE
 	Logf("[i76.exe | kernel32.dll | HeapDestroy]\n");
+#endif
 	return original::HeapDestroy(hHeap);
 }
 
@@ -710,7 +718,9 @@ BOOL WINAPI HeapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem) {
 }
 
 LPVOID WINAPI HeapReAlloc(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem, SIZE_T dwBytes) {
+#if LOG_VERBOSE
 	Logf("[i76.exe | kernel32.dll | HeapReAlloc]\n");
+#endif
 	return original::HeapReAlloc(hHeap, dwFlags, lpMem, dwBytes);
 }
 
@@ -756,7 +766,9 @@ BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes) {
 }
 
 BOOL WINAPI SetPriorityClass(HANDLE hProcess, DWORD dwPriorityClass) {
+#if LOG_VERBOSE
 	Logf("[i76.exe | kernel32.dll | SetPriorityClass]\n");
+#endif
 	return original::SetPriorityClass(hProcess, dwPriorityClass);
 }
 
