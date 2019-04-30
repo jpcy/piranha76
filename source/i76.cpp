@@ -5,6 +5,7 @@
 #include "MemoryModule.h"
 #include "main.h"
 #include "i76shell.h"
+#include "zglide.h"
 
 namespace i76 {
 namespace data {
@@ -632,9 +633,11 @@ HMODULE WINAPI GetModuleHandleA(LPCSTR lpModuleName) {
 }
 
 FARPROC WINAPI GetProcAddress(HMODULE hModule, LPCSTR lpProcName) {
-	Logf("[i76.exe | kernel32.dll | GetProcAddress] proc:'%s'\n", lpProcName);
 	if (i76shell::IsModule(hModule))
 		return i76shell::GetProcAddress(lpProcName);
+	if (zglide::IsModule(hModule))
+		return zglide::GetProcAddress(lpProcName);
+	Logf("[i76.exe | kernel32.dll | GetProcAddress] proc:'%s'\n", lpProcName);
 	return original::GetProcAddress(hModule, lpProcName);
 }
 
@@ -728,6 +731,8 @@ HMODULE WINAPI LoadLibraryA(LPCSTR lpLibFileName) {
 	Logf("[i76.exe | kernel32.dll | LoadLibraryA] filename:'%s'\n", lpLibFileName);
 	if (bx::strCmpI(lpLibFileName, I76SHELL_DLL) == 0)
 		return i76shell::Load();
+	if (bx::strCmpI(lpLibFileName, ZGLIDE_DLL) == 0)
+		return zglide::Load();
 	return original::LoadLibraryA(lpLibFileName);
 }
 
@@ -904,7 +909,7 @@ int WINAPI GetSystemMetrics(int nIndex) {
 }
 
 BOOL WINAPI GetWindowRect(HWND hWnd, LPRECT lpRect) {
-	Logf("[i76.exe | user32.dll | GetWindowRect\n");
+	Logf("[i76.exe | user32.dll | GetWindowRect]\n");
 	return original::GetWindowRect(hWnd, lpRect);
 }
 
