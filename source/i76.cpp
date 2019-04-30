@@ -410,7 +410,7 @@ HRESULT WINAPI DirectDrawCreate(GUID *lpGUID, LPDIRECTDRAW *lplpDD, IUnknown *pU
 	HRESULT hr = original::DirectDrawCreate(lpGUID, lplpDD, pUnkOuter);
 	if (hr)
 		Logf("HRESULT: %u\n", hr);
-#if 1
+#if WRAP_DDRAW
 	original::directDrawInterface = (LPDIRECTDRAW7)*lplpDD;
 	directDrawInterface = new CustomIDirectDraw();
 	*lplpDD = (LPDIRECTDRAW)directDrawInterface;
@@ -647,7 +647,9 @@ HANDLE WINAPI GetProcessHeap() {
 }
 
 DWORD WINAPI GetTickCount() {
+#if LOG_VERBOSE
 	Logf("[i76.exe | kernel32.dll | GetTickCount]\n");
+#endif
 	return original::GetTickCount();
 }
 
@@ -713,7 +715,9 @@ LPVOID WINAPI HeapReAlloc(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem, SIZE_T dwBy
 }
 
 SIZE_T WINAPI HeapSize(HANDLE hHeap, DWORD dwFlags, LPCVOID lpMem) {
+#if LOG_VERBOSE
 	Logf("[i76.exe | kernel32.dll | HeapSize]\n");
+#endif
 	return original::HeapSize(hHeap, dwFlags, lpMem);
 }
 
@@ -883,7 +887,9 @@ HDC WINAPI GetDC(HWND hWnd) {
 }
 
 HWND WINAPI GetFocus(VOID) {
+#if LOG_VERBOSE
 	Logf("[i76.exe | user32.dll | GetFocus]\n");
+#endif
 	return original::GetFocus();
 }
 

@@ -6,8 +6,9 @@
 #define LOG_VERBOSE 0
 #define LOG_WINPROC 0
 #define FORCE_ENUM_DISPLAY_MODE_16BPP 0
-#define FORCE_1024_RESOLUTION 1
-#define FORCE_WINDOWED 1
+#define FORCE_1024_RESOLUTION 0
+#define FORCE_WINDOWED 0
+#define WRAP_DDRAW 0
 
 template<class T>
 struct ArrayView

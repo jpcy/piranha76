@@ -305,6 +305,11 @@ void PrintMsg(uint32_t msg) {
 	Logf("%u", msg);
 }
 
+static const char *s_relativePathLibs[] = {
+	"ddraw.dll",
+	"glide2x.dll"
+};
+
 static HCUSTOMMODULE CustomLoadLibrary(LPCSTR _filename, void *_userData) {
 	auto userData = (MemoryModuleUserData *)_userData;
 #if LOG_IMPORTS
@@ -312,7 +317,18 @@ static HCUSTOMMODULE CustomLoadLibrary(LPCSTR _filename, void *_userData) {
 #endif
 	Library lib;
 	bx::strCopy(lib.name, sizeof(lib.name), _filename);
-	lib.handle = bx::dlopen(_filename);
+	lib.handle = nullptr;
+	for (uint32_t i = 0; i < BX_COUNTOF(s_relativePathLibs); i++) {
+		if (bx::strCmpI(_filename, s_relativePathLibs[i]) == 0) {
+			char path[256];
+			GetCurrentDirectoryA(sizeof(path), path);
+			bx::strCat(path, sizeof(path), "\\");
+			bx::strCat(path, sizeof(path), s_relativePathLibs[i]);
+			lib.handle = bx::dlopen(path);
+		}
+	}
+	if (!lib.handle)
+		lib.handle = bx::dlopen(_filename);
 	userData->libraries.push_back(lib);
 	return lib.handle;
 }
@@ -370,6 +386,12 @@ HMEMORYMODULE CustomMemoryLoadLibrary(const void *_fileData, size_t _fileLength,
 }
 
 int main(int /*argc*/, char ** /*argv*/) {
+#if 0
+	// probably don't want to load the local copy of win32.dll
+	char path[256];
+	GetCurrentDirectoryA(sizeof(path), path);
+	SetDllDirectoryA(path);
+#endif
 	if (!i76::Load())
 		return 1;
 	return 0;
