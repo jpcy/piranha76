@@ -16,9 +16,9 @@ namespace original {
 
 int (*CheckFunc)(void *hwConfig); // GrHwConfiguration
 int (*FirstDevice)(int *_arg1);
-void (*GetFuncDesc)(char *_arg1, int *_arg2, int arg3);
+int (*GetFuncDesc)(char *_arg1, int *_arg2, int arg3);
 void (*GetNumDevice)();
-void (*GetSocketCaps)();
+int (*GetSocketCaps)();
 int (*LastDevice)();
 int (*LockDisplay)(int *_arg1);
 void (*LostDeviceDisplay)();
@@ -41,23 +41,42 @@ namespace wrap {
 // exports
 
 // just wraps grSstQueryBoards
+// returns 1 on success (number of graphics subsystems)
 int CheckFunc(void *hwConfig) {
 	Logf("[" ZGLIDE_DLL " | export | CheckFunc]\n");
 	int result = original::CheckFunc(hwConfig);
-	return result;
-}
-
-int FirstDevice(int *_arg1) {
-	Logf("[" ZGLIDE_DLL " | export | FirstDevice]\n");
-	int result = original::FirstDevice(_arg1);
 	Logf("   %d\n", result);
 	return result;
 }
 
-void GetFuncDesc(char *_arg1, int *_arg2, int _arg3) {
+// _args1[1] is bpp, seems to always be 8?
+// _args1[2] is 768, must be bitmask
+//     if & 1, use GR_DEPTHBUFFER_WBUFFER
+//     if & 2, use fog
+//     if & 256, use GR_TEXFMT_ARGB_1555 instead of GR_TEXFMT_RGB_565
+// _args1[5] is the fog color
+// _args1[15] is 640
+// _args1[16] is 480
+// returns 0 on success
+int FirstDevice(int *_arg1) {
+	Logf("[" ZGLIDE_DLL " | export | FirstDevice]\n");
+	/*int copy[28];
+	memset(copy, 0, 28 * 4);
+	copy[1] = 16;
+	copy[2] = 0;
+	copy[5] = 0;
+	copy[15] = 640;
+	copy[16] = 480;*/
+	int result = original::FirstDevice(copy);
+	Logf("   %d\n", result);
+	return result;
+}
+
+// always returns 0
+int GetFuncDesc(char *_arg1, int *_arg2, int _arg3) {
 	// _arg3 is always 0
 	Logf("[" ZGLIDE_DLL " | export | GetFuncDesc]\n");
-	original::GetFuncDesc(_arg1, _arg2, _arg3);
+	return original::GetFuncDesc(_arg1, _arg2, _arg3);
 	// _arg1 will be RASTER
 	// _arg2 should be 0, 1 or 2
 }
@@ -66,8 +85,12 @@ void GetNumDevice() {
 	Logf("[" ZGLIDE_DLL " | export | GetNumDevice]\n");
 }
 
-void GetSocketCaps() {
+// & 1 - use wbuffer
+// & 2 - use fog
+// see FirstDevice
+int GetSocketCaps() {
 	Logf("[" ZGLIDE_DLL " | export | GetSocketCaps]\n");
+	return original::GetSocketCaps();
 }
 
 int LastDevice() {
@@ -78,7 +101,7 @@ int LastDevice() {
 }
 
 int LockDisplay(int *_arg1) {
-	Logf("[" ZGLIDE_DLL " | export | LockDisplay]\n");
+	Logf("[" ZGLIDE_DLL " | export | LockDisplay] %d\n", *_arg1);
 	int result = original::LockDisplay(_arg1);
 	Logf("   %d\n", result);
 	return result;
@@ -116,8 +139,9 @@ void SetLumaTable() {
 	Logf("[" ZGLIDE_DLL " | export | SetLumaTable]\n");
 }
 
+// always returns 0
 int SetState(int _arg1, int _arg2) {
-	Logf("[" ZGLIDE_DLL " | export | SetState %d %d]\n", _arg1, _arg2);
+	Logf("[" ZGLIDE_DLL " | export | SetState] %d %d\n", _arg1, _arg2);
 	return original::SetState(_arg1, _arg2);
 }
 
@@ -128,7 +152,9 @@ void SetTexturePalette() {
 // just wraps grLfbUnlock
 int UnlockDisplay() {
 	Logf("[" ZGLIDE_DLL " | export | UnlockDisplay]\n");
-	return original::UnlockDisplay();
+	int result = original::UnlockDisplay();
+	Logf("   %d\n", result);
+	return result;
 }
 
 void UpdateTexture() {
