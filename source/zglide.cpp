@@ -67,7 +67,7 @@ int FirstDevice(int *_arg1) {
 	copy[5] = 0;
 	copy[15] = 640;
 	copy[16] = 480;*/
-	int result = original::FirstDevice(copy);
+	int result = original::FirstDevice(_arg1);
 	Logf("   %d\n", result);
 	return result;
 }

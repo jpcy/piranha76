@@ -8,7 +8,8 @@
 #define FORCE_ENUM_DISPLAY_MODE_16BPP 0
 #define FORCE_1024_RESOLUTION 0
 #define FORCE_WINDOWED 0
-#define WRAP_DDRAW 0
+#define WRAP_DDRAW 1
+#define WRAP_ZGLIDE 0
 
 template<class T>
 struct ArrayView

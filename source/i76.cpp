@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <bx/bx.h>
 #include <bx/string.h>
+#define CINTERFACE
 #include <ddraw.h>
+#undef CINTERFACE
 #include "MemoryModule.h"
 #include "main.h"
 #include "i76shell.h"
@@ -22,8 +24,41 @@ struct DisplayMode
 
 uint32_t *numDisplayModes;
 DisplayMode *displayModes; // length: 50
-
 }
+
+namespace ddraw {
+	struct VTable
+	{
+		HRESULT (__stdcall *QueryInterface)(IDirectDraw FAR *_this, REFIID riid, LPVOID FAR * ppvObj);
+		ULONG (__stdcall *AddRef)(IDirectDraw FAR *_this);
+		ULONG (__stdcall *Release)(IDirectDraw FAR *_this);
+		HRESULT (__stdcall *Compact)(IDirectDraw FAR *_this);
+		HRESULT (__stdcall *CreateClipper)(IDirectDraw FAR *_this, DWORD arg1, LPDIRECTDRAWCLIPPER FAR* arg2, IUnknown FAR * arg3);
+		HRESULT (__stdcall *CreatePalette)(IDirectDraw FAR *_this, DWORD arg1, LPPALETTEENTRY arg2, LPDIRECTDRAWPALETTE FAR* arg3, IUnknown FAR * arg4);
+		HRESULT (__stdcall *CreateSurface)(IDirectDraw FAR *_this, LPDDSURFACEDESC arg1, LPDIRECTDRAWSURFACE FAR *arg2, IUnknown FAR *arg3);
+		HRESULT (__stdcall *DuplicateSurface)(IDirectDraw FAR *_this, LPDIRECTDRAWSURFACE arg1, LPDIRECTDRAWSURFACE FAR * arg2);
+		HRESULT (__stdcall *EnumDisplayModes)(IDirectDraw FAR *_this, DWORD arg1, LPDDSURFACEDESC arg2, LPVOID arg3, LPDDENUMMODESCALLBACK arg4);
+		HRESULT (__stdcall *EnumSurfaces)(IDirectDraw FAR *_this, DWORD arg1, LPDDSURFACEDESC arg2, LPVOID arg3, LPDDENUMSURFACESCALLBACK arg4);
+		HRESULT (__stdcall *FlipToGDISurface)(IDirectDraw FAR *_this);
+		HRESULT (__stdcall *GetCaps)(IDirectDraw FAR *_this, LPDDCAPS arg1, LPDDCAPS arg2);
+		HRESULT (__stdcall *GetDisplayMode)(IDirectDraw FAR *_this, LPDDSURFACEDESC arg1);
+		HRESULT (__stdcall *GetFourCCCodes)(IDirectDraw FAR *_this, LPDWORD arg1, LPDWORD arg2);
+		HRESULT (__stdcall *GetGDISurface)(IDirectDraw FAR *_this, LPDIRECTDRAWSURFACE FAR *arg1);
+		HRESULT (__stdcall *GetMonitorFrequency)(IDirectDraw FAR *_this, LPDWORD arg1);
+		HRESULT (__stdcall *GetScanLine)(IDirectDraw FAR *_this, LPDWORD arg1);
+		HRESULT (__stdcall *GetVerticalBlankStatus)(IDirectDraw FAR *_this, LPBOOL arg1);
+		HRESULT (__stdcall *Initialize)(IDirectDraw FAR *_this, GUID FAR *arg1);
+		HRESULT (__stdcall *RestoreDisplayMode)(IDirectDraw FAR *_this);
+		HRESULT (__stdcall *SetCooperativeLevel)(IDirectDraw FAR *_this, HWND arg1, DWORD arg2);
+		HRESULT (__stdcall *SetDisplayMode)(IDirectDraw FAR *_this, DWORD width, DWORD height, DWORD bpp);
+		HRESULT (__stdcall *WaitForVerticalBlank)(IDirectDraw FAR *_this, DWORD arg1, HANDLE arg2);
+	};
+
+	struct Context
+	{
+		VTable FAR *lpVtbl;
+	};
+} // namespace ddraw
 
 namespace original {
 
@@ -37,8 +72,8 @@ LSTATUS (APIENTRY *RegSetValueExA)(HKEY hKey, LPCSTR lpValueName, DWORD Reserved
 
 // ddraw.dll
 
-LPDDENUMMODESCALLBACK2 ddrawEnumDisplayModes = nullptr;
-LPDIRECTDRAW7 directDrawInterface = nullptr;
+LPDDENUMMODESCALLBACK ddrawEnumDisplayModes = nullptr;
+LPDIRECTDRAW ddrawContext = nullptr;
 
 HRESULT (WINAPI *DirectDrawCreate)(GUID *lpGUID, LPDIRECTDRAW *lplpDD, IUnknown *pUnkOuter);
 HRESULT (WINAPI *DirectDrawEnumerateA)(LPDDENUMCALLBACKA lpCallback, LPVOID lpContext);
@@ -213,7 +248,7 @@ LSTATUS APIENTRY RegSetValueExA(HKEY hKey, LPCSTR lpValueName, DWORD Reserved, D
 
 // ddraw.dll
 
-static HRESULT __stdcall EnumDisplayModesCallback(LPDDSURFACEDESC2 Arg1, LPVOID Arg2) {
+static HRESULT __stdcall EnumDisplayModesCallback(LPDDSURFACEDESC Arg1, LPVOID Arg2) {
 	Logf("   %ux%u, %u bpp\n", Arg1->dwWidth, Arg1->dwHeight, Arg1->ddpfPixelFormat.dwRGBBitCount);
 	if (Arg2)
 		Logf("      arg2 is not null\n");
@@ -221,7 +256,7 @@ static HRESULT __stdcall EnumDisplayModesCallback(LPDDSURFACEDESC2 Arg1, LPVOID 
 	// i76 only cares about dwWidth, dwHeight, and this
 	Arg1->ddpfPixelFormat.dwRGBBitCount = 16;
 #endif
-#if 1
+#if 0
 	data::DisplayMode &mode = data::displayModes[*data::numDisplayModes];
 	mode.width = Arg1->dwWidth;
 	mode.height = Arg1->dwHeight;
@@ -237,173 +272,130 @@ static HRESULT __stdcall EnumDisplayModesCallback(LPDDSURFACEDESC2 Arg1, LPVOID 
 #endif
 }
 
-struct CustomIDirectDraw
-{
-	/*** IUnknown methods ***/
-	virtual __declspec(nothrow) HRESULT __stdcall QueryInterface(REFIID riid, LPVOID FAR * ppvObj) {
+namespace ddraw {
+	HRESULT __stdcall QueryInterface(IDirectDraw FAR * /*_this*/, REFIID riid, LPVOID FAR * ppvObj) {
 		Logf("[i76.exe | IDirectDraw::QueryInterface]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->QueryInterface(riid, ppvObj));
+		CHECK_HR_RETURN(original::ddrawContext->lpVtbl->QueryInterface(original::ddrawContext, riid, ppvObj));
 	}
 
-	virtual __declspec(nothrow) ULONG __stdcall AddRef() {
+	ULONG __stdcall AddRef(IDirectDraw FAR * /*_this*/) {
 		Logf("[i76.exe | IDirectDraw::AddRef]\n");
-		return original::directDrawInterface->AddRef();
+		return original::ddrawContext->lpVtbl->AddRef(original::ddrawContext);
 	}
 
-	virtual __declspec(nothrow) ULONG __stdcall Release() {
+	ULONG __stdcall Release(IDirectDraw FAR * /*_this*/) {
 		Logf("[i76.exe | IDirectDraw::Release]\n");
-		return original::directDrawInterface->Release();
+		return original::ddrawContext->lpVtbl->Release(original::ddrawContext);
 	}
 
-	/*** IDirectDraw methods ***/
-	virtual __declspec(nothrow) HRESULT __stdcall Compact() {
+	HRESULT __stdcall Compact(IDirectDraw FAR * /*_this*/) {
 		Logf("[i76.exe | IDirectDraw::Compact]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->Compact());
+		CHECK_HR_RETURN(original::ddrawContext->lpVtbl->Compact(original::ddrawContext));
 	}
 
-	virtual __declspec(nothrow) HRESULT __stdcall CreateClipper(DWORD arg1, LPDIRECTDRAWCLIPPER FAR* arg2, IUnknown FAR * arg3) {
+	HRESULT __stdcall CreateClipper(IDirectDraw FAR * /*_this*/, DWORD arg1, LPDIRECTDRAWCLIPPER FAR* arg2, IUnknown FAR * arg3) {
 		Logf("[i76.exe | IDirectDraw::CreateClipper]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->CreateClipper(arg1, arg2, arg3));
+		CHECK_HR_RETURN(original::ddrawContext->lpVtbl->CreateClipper(original::ddrawContext, arg1, arg2, arg3));
 	}
 
-	virtual __declspec(nothrow) HRESULT __stdcall CreatePalette(DWORD arg1, LPPALETTEENTRY arg2, LPDIRECTDRAWPALETTE FAR* arg3, IUnknown FAR * arg4) {
+	HRESULT __stdcall CreatePalette(IDirectDraw FAR * /*_this*/, DWORD arg1, LPPALETTEENTRY arg2, LPDIRECTDRAWPALETTE FAR* arg3, IUnknown FAR * arg4) {
 		Logf("[i76.exe | IDirectDraw::CreatePalette]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->CreatePalette(arg1, arg2, arg3, arg4));
+		CHECK_HR_RETURN(original::ddrawContext->lpVtbl->CreatePalette(original::ddrawContext, arg1, arg2, arg3, arg4));
 	}
 
-	virtual __declspec(nothrow) HRESULT __stdcall CreateSurface(LPDDSURFACEDESC2 arg1, LPDIRECTDRAWSURFACE7 FAR *arg2, IUnknown FAR *arg3) {
-		Logf("[i76.exe | IDirectDraw::CreateSurface]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->CreateSurface(arg1, arg2, arg3));
+	HRESULT __stdcall CreateSurface(IDirectDraw FAR * /*_this*/, LPDDSURFACEDESC arg1, LPDIRECTDRAWSURFACE FAR *arg2, IUnknown FAR *arg3) {
+		Logf("[i76.exe | IDirectDraw::CreateSurface] %ux%u\n", arg1->dwWidth, arg1->dwHeight);
+		CHECK_HR_RETURN(original::ddrawContext->lpVtbl->CreateSurface(original::ddrawContext, arg1, arg2, arg3));
 	}
 
-	virtual __declspec(nothrow) HRESULT __stdcall DuplicateSurface(LPDIRECTDRAWSURFACE7 arg1, LPDIRECTDRAWSURFACE7 FAR * arg2) {
+	HRESULT __stdcall DuplicateSurface(IDirectDraw FAR * /*_this*/, LPDIRECTDRAWSURFACE arg1, LPDIRECTDRAWSURFACE FAR * arg2) {
 		Logf("[i76.exe | IDirectDraw::DuplicateSurface]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->DuplicateSurface(arg1, arg2));
+		CHECK_HR_RETURN(original::ddrawContext->lpVtbl->DuplicateSurface(original::ddrawContext, arg1, arg2));
 	}
 
-	virtual __declspec(nothrow) HRESULT __stdcall EnumDisplayModes(DWORD arg1, LPDDSURFACEDESC2 arg2, LPVOID arg3, LPDDENUMMODESCALLBACK2 arg4) {
+	HRESULT __stdcall EnumDisplayModes(IDirectDraw FAR * /*_this*/, DWORD arg1, LPDDSURFACEDESC arg2, LPVOID arg3, LPDDENUMMODESCALLBACK arg4) {
 		Logf("[i76.exe | IDirectDraw::EnumDisplayModes]\n");
 		original::ddrawEnumDisplayModes = arg4;
-		CHECK_HR_RETURN(original::directDrawInterface->EnumDisplayModes(arg1, arg2, arg3, EnumDisplayModesCallback));
+		CHECK_HR_RETURN(original::ddrawContext->lpVtbl->EnumDisplayModes(original::ddrawContext, arg1, arg2, arg3, EnumDisplayModesCallback));
 	}
 
-	virtual __declspec(nothrow) HRESULT __stdcall EnumSurfaces(DWORD arg1, LPDDSURFACEDESC2 arg2, LPVOID arg3, LPDDENUMSURFACESCALLBACK7 arg4) {
+	HRESULT __stdcall EnumSurfaces(IDirectDraw FAR * /*_this*/, DWORD arg1, LPDDSURFACEDESC arg2, LPVOID arg3, LPDDENUMSURFACESCALLBACK arg4) {
 		Logf("[i76.exe | IDirectDraw::EnumSurfaces]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->EnumSurfaces(arg1, arg2, arg3, arg4));
+		CHECK_HR_RETURN(original::ddrawContext->lpVtbl->EnumSurfaces(original::ddrawContext, arg1, arg2, arg3, arg4));
 	}
 
-	virtual __declspec(nothrow) HRESULT __stdcall FlipToGDISurface() {
+	HRESULT __stdcall FlipToGDISurface(IDirectDraw FAR * /*_this*/) {
 		Logf("[i76.exe | IDirectDraw::FlipToGDISurface]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->FlipToGDISurface());
+		CHECK_HR_RETURN(original::ddrawContext->lpVtbl->FlipToGDISurface(original::ddrawContext));
 	}
 
-	virtual __declspec(nothrow) HRESULT __stdcall GetCaps(LPDDCAPS arg1, LPDDCAPS arg2) {
+	HRESULT __stdcall GetCaps(IDirectDraw FAR * /*_this*/, LPDDCAPS arg1, LPDDCAPS arg2) {
 		Logf("[i76.exe | IDirectDraw::GetCaps]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->GetCaps(arg1, arg2));
+		CHECK_HR_RETURN(original::ddrawContext->lpVtbl->GetCaps(original::ddrawContext, arg1, arg2));
 	}
 
-	virtual __declspec(nothrow) HRESULT __stdcall GetDisplayMode(LPDDSURFACEDESC2 arg1) {
+	HRESULT __stdcall GetDisplayMode(IDirectDraw FAR * /*_this*/, LPDDSURFACEDESC arg1) {
 		Logf("[i76.exe | IDirectDraw::GetDisplayMode]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->GetDisplayMode(arg1));
+		CHECK_HR_RETURN(original::ddrawContext->lpVtbl->GetDisplayMode(original::ddrawContext, arg1));
 	}
 
-	virtual __declspec(nothrow) HRESULT __stdcall GetFourCCCodes(LPDWORD arg1, LPDWORD arg2) {
+	HRESULT __stdcall GetFourCCCodes(IDirectDraw FAR * /*_this*/, LPDWORD arg1, LPDWORD arg2) {
 		Logf("[i76.exe | IDirectDraw::GetFourCCCodes]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->GetFourCCCodes(arg1, arg2));
+		CHECK_HR_RETURN(original::ddrawContext->lpVtbl->GetFourCCCodes(original::ddrawContext, arg1, arg2));
 	}
 
-	virtual __declspec(nothrow) HRESULT __stdcall GetGDISurface(LPDIRECTDRAWSURFACE7 FAR *arg1) {
+	HRESULT __stdcall GetGDISurface(IDirectDraw FAR * /*_this*/, LPDIRECTDRAWSURFACE FAR *arg1) {
 		Logf("[i76.exe | IDirectDraw::GetGDISurface]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->GetGDISurface(arg1));
+		CHECK_HR_RETURN(original::ddrawContext->lpVtbl->GetGDISurface(original::ddrawContext, arg1));
 	}
 
-	virtual __declspec(nothrow) HRESULT __stdcall GetMonitorFrequency(LPDWORD arg1) {
+	HRESULT __stdcall GetMonitorFrequency(IDirectDraw FAR * /*_this*/, LPDWORD arg1) {
 		Logf("[i76.exe | IDirectDraw::GetMonitorFrequency]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->GetMonitorFrequency(arg1));
+		CHECK_HR_RETURN(original::ddrawContext->lpVtbl->GetMonitorFrequency(original::ddrawContext, arg1));
 	}
 
-	virtual __declspec(nothrow) HRESULT __stdcall GetScanLine(LPDWORD arg1) {
+	HRESULT __stdcall GetScanLine(IDirectDraw FAR * /*_this*/, LPDWORD arg1) {
 		Logf("[i76.exe | IDirectDraw::GetScanLine]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->GetScanLine(arg1));
+		CHECK_HR_RETURN(original::ddrawContext->lpVtbl->GetScanLine(original::ddrawContext, arg1));
 	}
 
-	virtual __declspec(nothrow) HRESULT __stdcall GetVerticalBlankStatus(LPBOOL arg1) {
+	HRESULT __stdcall GetVerticalBlankStatus(IDirectDraw FAR * /*_this*/, LPBOOL arg1) {
 		Logf("[i76.exe | IDirectDraw::GetVerticalBlankStatus]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->GetVerticalBlankStatus(arg1));
+		CHECK_HR_RETURN(original::ddrawContext->lpVtbl->GetVerticalBlankStatus(original::ddrawContext, arg1));
 	}
 
-	virtual __declspec(nothrow) HRESULT __stdcall Initialize(GUID FAR *arg1) {
+	HRESULT __stdcall Initialize(IDirectDraw FAR * /*_this*/, GUID FAR *arg1) {
 		Logf("[i76.exe | IDirectDraw::Initialize]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->Initialize(arg1));
+		CHECK_HR_RETURN(original::ddrawContext->lpVtbl->Initialize(original::ddrawContext, arg1));
 	}
 
-	virtual __declspec(nothrow) HRESULT __stdcall RestoreDisplayMode() {
+	HRESULT __stdcall RestoreDisplayMode(IDirectDraw FAR * /*_this*/) {
 		Logf("[i76.exe | IDirectDraw::RestoreDisplayMode]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->RestoreDisplayMode());
+		CHECK_HR_RETURN(original::ddrawContext->lpVtbl->RestoreDisplayMode(original::ddrawContext));
 	}
 
-	virtual __declspec(nothrow) HRESULT __stdcall SetCooperativeLevel(HWND arg1, DWORD arg2) {
+	HRESULT __stdcall SetCooperativeLevel(IDirectDraw FAR * /*_this*/, HWND arg1, DWORD arg2) {
 		// 17 = DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE
 		Logf("[i76.exe | IDirectDraw::SetCooperativeLevel value:%u]\n", arg2);
 #if FORCE_WINDOWED
-		CHECK_HR_RETURN(original::directDrawInterface->SetCooperativeLevel(arg1, DDSCL_NORMAL));
+		CHECK_HR_RETURN(original::ddrawContext->lpVtbl->SetCooperativeLevel(original::ddrawContext, arg1, DDSCL_NORMAL));
 #else
-		CHECK_HR_RETURN(original::directDrawInterface->SetCooperativeLevel(arg1, arg2));
+		CHECK_HR_RETURN(original::ddrawContext->lpVtbl->SetCooperativeLevel(original::ddrawContext, arg1, arg2));
 #endif
 	}
 
-	// https://docs.microsoft.com/en-us/windows/desktop/api/ddraw/nf-ddraw-idirectdraw7-setdisplaymode
-	// "As part of the prior-version IDirectDraw interface, this method did not include the dwRefreshRate and dwFlags parameters."
-	//virtual __declspec(nothrow) HRESULT __stdcall SetDisplayMode(DWORD width, DWORD height, DWORD bpp, DWORD refreshRate, DWORD flags) {
-	virtual __declspec(nothrow) HRESULT __stdcall SetDisplayMode(DWORD width, DWORD height, DWORD bpp) {
+	HRESULT __stdcall SetDisplayMode(IDirectDraw FAR * /*_this*/, DWORD width, DWORD height, DWORD bpp) {
 		Logf("[i76.exe | IDirectDraw::SetDisplayMode] width:%u, height:%u, bpp:%u\n", width, height, bpp);
-		CHECK_HR_RETURN(original::directDrawInterface->SetDisplayMode(width, height, bpp, 60, 0));
+		CHECK_HR_RETURN(original::ddrawContext->lpVtbl->SetDisplayMode(original::ddrawContext, width, height, bpp));
 	}
 
-	virtual __declspec(nothrow) HRESULT __stdcall WaitForVerticalBlank(DWORD arg1, HANDLE arg2) {
+	HRESULT __stdcall WaitForVerticalBlank(IDirectDraw FAR * /*_this*/, DWORD arg1, HANDLE arg2) {
 		Logf("[i76.exe | IDirectDraw::WaitForVerticalBlank]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->WaitForVerticalBlank(arg1, arg2));
+		CHECK_HR_RETURN(original::ddrawContext->lpVtbl->WaitForVerticalBlank(original::ddrawContext, arg1, arg2));
 	}
+} // namespace ddraw
 
-	/*** Added in the v2 interface ***/
-	virtual __declspec(nothrow) HRESULT __stdcall GetAvailableVidMem(LPDDSCAPS2 arg1, LPDWORD arg2, LPDWORD arg3) {
-		Logf("[i76.exe | IDirectDraw::GetAvailableVidMem]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->GetAvailableVidMem(arg1, arg2, arg3));
-	}
-
-	/*** Added in the V4 Interface ***/
-	virtual __declspec(nothrow) HRESULT __stdcall GetSurfaceFromDC(HDC arg1, LPDIRECTDRAWSURFACE7 *arg2) {
-		Logf("[i76.exe | IDirectDraw::GetSurfaceFromDC]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->GetSurfaceFromDC(arg1, arg2));
-	}
-
-	virtual __declspec(nothrow) HRESULT __stdcall RestoreAllSurfaces() {
-		Logf("[i76.exe | IDirectDraw::RestoreAllSurfaces]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->RestoreAllSurfaces());
-	}
-
-	virtual __declspec(nothrow) HRESULT __stdcall TestCooperativeLevel() {
-		Logf("[i76.exe | IDirectDraw::TestCooperativeLevel]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->TestCooperativeLevel());
-	}
-
-	virtual __declspec(nothrow) HRESULT __stdcall GetDeviceIdentifier(LPDDDEVICEIDENTIFIER2 arg1, DWORD arg2) {
-		Logf("[i76.exe | IDirectDraw::GetDeviceIdentifier]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->GetDeviceIdentifier(arg1, arg2));
-	}
-
-	virtual __declspec(nothrow) HRESULT __stdcall StartModeTest(LPSIZE arg1, DWORD arg2, DWORD arg3) {
-		Logf("[i76.exe | IDirectDraw::StartModeTest]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->StartModeTest(arg1, arg2, arg3));
-	}
-
-	virtual __declspec(nothrow) HRESULT __stdcall EvaluateMode(DWORD arg1, DWORD * arg2) {
-		Logf("[i76.exe | IDirectDraw::EvaluateMode]\n");
-		CHECK_HR_RETURN(original::directDrawInterface->EvaluateMode(arg1, arg2));
-	}
-};
-
-static CustomIDirectDraw *directDrawInterface = nullptr;
+static i76::ddraw::Context *ddrawContext = nullptr;
 
 HRESULT WINAPI DirectDrawCreate(GUID *lpGUID, LPDIRECTDRAW *lplpDD, IUnknown *pUnkOuter) {
 	Logf("[i76.exe | ddraw.dll | DirectDrawCreate]\n");
@@ -411,9 +403,33 @@ HRESULT WINAPI DirectDrawCreate(GUID *lpGUID, LPDIRECTDRAW *lplpDD, IUnknown *pU
 	if (hr)
 		Logf("HRESULT: %u\n", hr);
 #if WRAP_DDRAW
-	original::directDrawInterface = (LPDIRECTDRAW7)*lplpDD;
-	directDrawInterface = new CustomIDirectDraw();
-	*lplpDD = (LPDIRECTDRAW)directDrawInterface;
+	original::ddrawContext = (LPDIRECTDRAW)*lplpDD;
+	ddrawContext = new i76::ddraw::Context();
+	ddrawContext->lpVtbl = new i76::ddraw::VTable();
+	ddrawContext->lpVtbl->QueryInterface = ddraw::QueryInterface;
+	ddrawContext->lpVtbl->AddRef = ddraw::AddRef;
+	ddrawContext->lpVtbl->Release = ddraw::Release;
+	ddrawContext->lpVtbl->Compact = ddraw::Compact;
+	ddrawContext->lpVtbl->CreateClipper = ddraw::CreateClipper;
+	ddrawContext->lpVtbl->CreatePalette = ddraw::CreatePalette;
+	ddrawContext->lpVtbl->CreateSurface = ddraw::CreateSurface;
+	ddrawContext->lpVtbl->DuplicateSurface = ddraw::DuplicateSurface;
+	ddrawContext->lpVtbl->EnumDisplayModes = ddraw::EnumDisplayModes;
+	ddrawContext->lpVtbl->EnumSurfaces = ddraw::EnumSurfaces;
+	ddrawContext->lpVtbl->FlipToGDISurface = ddraw::FlipToGDISurface;
+	ddrawContext->lpVtbl->GetCaps = ddraw::GetCaps;
+	ddrawContext->lpVtbl->GetDisplayMode = ddraw::GetDisplayMode;
+	ddrawContext->lpVtbl->GetFourCCCodes = ddraw::GetFourCCCodes;
+	ddrawContext->lpVtbl->GetGDISurface = ddraw::GetGDISurface;
+	ddrawContext->lpVtbl->GetMonitorFrequency = ddraw::GetMonitorFrequency;
+	ddrawContext->lpVtbl->GetScanLine = ddraw::GetScanLine;
+	ddrawContext->lpVtbl->GetVerticalBlankStatus = ddraw::GetVerticalBlankStatus;
+	ddrawContext->lpVtbl->Initialize = ddraw::Initialize;
+	ddrawContext->lpVtbl->RestoreDisplayMode = ddraw::RestoreDisplayMode;
+	ddrawContext->lpVtbl->SetCooperativeLevel = ddraw::SetCooperativeLevel;
+	ddrawContext->lpVtbl->SetDisplayMode = ddraw::SetDisplayMode;
+	ddrawContext->lpVtbl->WaitForVerticalBlank = ddraw::WaitForVerticalBlank;
+	*lplpDD = (LPDIRECTDRAW)ddrawContext;
 #endif
 	return hr;
 }
@@ -637,8 +653,10 @@ HMODULE WINAPI GetModuleHandleA(LPCSTR lpModuleName) {
 FARPROC WINAPI GetProcAddress(HMODULE hModule, LPCSTR lpProcName) {
 	if (i76shell::IsModule(hModule))
 		return i76shell::GetProcAddress(lpProcName);
+#if WRAP_ZGLIDE
 	if (zglide::IsModule(hModule))
 		return zglide::GetProcAddress(lpProcName);
+#endif
 	Logf("[i76.exe | kernel32.dll | GetProcAddress] proc:'%s'\n", lpProcName);
 	return original::GetProcAddress(hModule, lpProcName);
 }
@@ -745,8 +763,10 @@ HMODULE WINAPI LoadLibraryA(LPCSTR lpLibFileName) {
 	Logf("[i76.exe | kernel32.dll | LoadLibraryA] filename:'%s'\n", lpLibFileName);
 	if (bx::strCmpI(lpLibFileName, I76SHELL_DLL) == 0)
 		return i76shell::Load();
+#if WRAP_ZGLIDE
 	if (bx::strCmpI(lpLibFileName, ZGLIDE_DLL) == 0)
 		return zglide::Load();
+#endif
 	return original::LoadLibraryA(lpLibFileName);
 }
 
