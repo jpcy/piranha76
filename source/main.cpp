@@ -14,6 +14,21 @@ void Logf(const char *_format, ...) {
 	OutputDebugStringA(buffer);
 }
 
+void LogFunctionf(const char *_parentModule, const char *_module, const char *_function, const char *_argsFormat, ...) {
+#ifdef FUNCTION_LOG_FILTER_MODULE
+	if (bx::strCmpI(_module, FUNCTION_LOG_FILTER_MODULE) != 0)
+		return;
+#endif
+	char buffer[2048];
+	if (_argsFormat) {
+		va_list args;
+		va_start(args, _argsFormat);
+		vsnprintf(buffer, sizeof(buffer), _argsFormat, args);
+		va_end(args);
+	}
+	Logf("%-16s %-16s %-32s %s\n", _parentModule, _module, _function, _argsFormat ? buffer : "");
+}
+
 struct MsgName
 {
 	uint32_t id;
@@ -294,14 +309,13 @@ static MsgName s_msgNames[] = {
 	MSG_NAME(WM_PENWINLAST)
 };
 
-void PrintMsg(uint32_t msg) {
+const char *MsgToString(uint32_t _msg) {
 	for (int i = 0; i < BX_COUNTOF(s_msgNames); i++) {
-		if (msg == s_msgNames[i].id) {
-			Logf("%s", s_msgNames[i].name);
-			return;
+		if (_msg == s_msgNames[i].id) {
+			return s_msgNames[i].name;
 		}
 	}
-	Logf("%u", msg);
+	return nullptr;
 }
 
 static const char *s_relativePathLibs[] = {

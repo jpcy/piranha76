@@ -9,6 +9,8 @@
 #include "i76shell.h"
 #include "zglide.h"
 
+#define I76_LOG(_module, _function, ...) LogFunctionf(I76_EXE, _module, _function, __VA_ARGS__)
+
 namespace i76 {
 namespace data {
 
@@ -164,244 +166,244 @@ namespace wrap {
 // advapi32.dll
 
 LSTATUS APIENTRY RegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {
-	Logf("[i76.exe | advapi32.dll | RegOpenKeyExA] sub key:'%s'\n", lpSubKey);
+	I76_LOG("advapi32.dll", "RegOpenKeyExA", "sub key:'%s'", lpSubKey);
 	LSTATUS status = original::RegOpenKeyExA(hKey, lpSubKey, ulOptions, samDesired, phkResult);
 	return status;
 }
 
 LSTATUS APIENTRY RegCloseKey(HKEY hKey) {
-	Logf("[i76.exe | advapi32.dll | RegCloseKey]\n");
+	I76_LOG("advapi32.dll", "RegCloseKey");
 	//return original::RegCloseKey(hKey);
 	return 0;
 }
 
 LSTATUS APIENTRY RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData) {
-	Logf("[i76.exe | advapi32.dll | RegQueryValueExA]\n");
+	I76_LOG("advapi32.dll", "RegQueryValueExA");
 	//return original::RegQueryValueExA(hKey, lpValueName, lpReserved, lpType, lpData, lpcbData);
 	*lpData = 48;
 	return 0;
 }
 
 LSTATUS APIENTRY RegCreateKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition ) {
-	Logf("[i76.exe | advapi32.dll | RegCreateKeyExA] sub key:'%s'\n", lpSubKey);
+	I76_LOG("advapi32.dll", "RegCreateKeyExA", "sub key:'%s'", lpSubKey);
 	LSTATUS status = original::RegCreateKeyExA(hKey, lpSubKey, Reserved, lpClass, dwOptions, samDesired, lpSecurityAttributes, phkResult, lpdwDisposition);
 	return 0;
 	//return status;
 }
 
 LSTATUS APIENTRY RegSetValueExA(HKEY hKey, LPCSTR lpValueName, DWORD Reserved, DWORD dwType, const BYTE* lpData, DWORD cbData) {
-	Logf("[i76.exe | advapi32.dll | RegSetValueExA]\n");
+	I76_LOG("advapi32.dll", "RegSetValueExA");
 	return original::RegSetValueExA(hKey, lpValueName, Reserved, dwType, lpData, cbData);
 }
 
 // gdi32.dll
 
 int WINAPI AddFontResourceA(LPCSTR Arg1) {
-	Logf("[i76.exe | gdi32.dll | AddFontResourceA]\n");
+	I76_LOG("gdi32.dll", "AddFontResourceA");
 	return original::AddFontResourceA(Arg1);
 }
 
 HDC WINAPI CreateCompatibleDC(HDC hdc) {
-	Logf("[i76.exe | gdi32.dll | CreateCompatibleDC]\n");
+	I76_LOG("gdi32.dll", "CreateCompatibleDC");
 	return original::CreateCompatibleDC(hdc);
 }
 
 HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *pbmi, UINT usage, VOID **ppvBits, HANDLE hSection, DWORD offset) {
-	Logf("[i76.exe | gdi32.dll | CreateDIBSection]\n");
+	I76_LOG("gdi32.dll", "CreateDIBSection");
 	return original::CreateDIBSection(hdc, pbmi, usage, ppvBits, hSection, offset);
 }
 
 HFONT WINAPI CreateFontIndirectA(LOGFONTA *lplf) {
-	Logf("[i76.exe | gdi32.dll | CreateFontIndirectA]\n");
+	I76_LOG("gdi32.dll", "CreateFontIndirectA");
 	return original::CreateFontIndirectA(lplf);
 }
 
 HPALETTE WINAPI CreatePalette(CONST LOGPALETTE * plpal) {
-	Logf("[i76.exe | gdi32.dll | CreatePalette]\n");
+	I76_LOG("gdi32.dll", "CreatePalette");
 	return original::CreatePalette(plpal);
 }
 
 BOOL WINAPI CreateScalableFontResourceA(DWORD fdwHidden, LPCSTR lpszFont, LPCSTR lpszFile, LPCSTR lpszPath) {
-	Logf("[i76.exe | gdi32.dll | CreateScalableFontResourceA]\n");
+	I76_LOG("gdi32.dll", "CreateScalableFontResourceA");
 	return original::CreateScalableFontResourceA(fdwHidden, lpszFont, lpszFile, lpszPath);
 }
 
 BOOL WINAPI DeleteDC(HDC hdc) {
-	Logf("[i76.exe | gdi32.dll | DeleteDC]\n");
+	I76_LOG("gdi32.dll", "DeleteDC");
 	return original::DeleteDC(hdc);
 }
 
 BOOL WINAPI DeleteObject(HGDIOBJ ho) {
-	Logf("[i76.exe | gdi32.dll | DeleteObject]\n");
+	I76_LOG("gdi32.dll", "DeleteObject");
 	return original::DeleteObject(ho);
 }
 
 int WINAPI GetDeviceCaps(HDC hdc, int index) {
-	Logf("[i76.exe | gdi32.dll | GetDeviceCaps]\n");
+	I76_LOG("gdi32.dll", "GetDeviceCaps");
 	return original::GetDeviceCaps(hdc, index);
 }
 
 HGDIOBJ WINAPI GetStockObject(int i) {
-	Logf("[i76.exe | gdi32.dll | GetStockObject]\n");
+	I76_LOG("gdi32.dll", "GetStockObject");
 	return original::GetStockObject(i);
 }
 
 UINT WINAPI GetSystemPaletteEntries(HDC hdc, UINT iStart, UINT cEntries, LPPALETTEENTRY pPalEntries) {
-	Logf("[i76.exe | gdi32.dll | GetSystemPaletteEntries]\n");
+	I76_LOG("gdi32.dll", "GetSystemPaletteEntries");
 	return original::GetSystemPaletteEntries(hdc, iStart, cEntries, pPalEntries);
 }
 
 BOOL APIENTRY GetTextExtentExPointA(HDC hdc, LPCSTR lpszString, int cchString, int nMaxExtent, LPINT lpnFit, LPINT lpnDx, LPSIZE lpSize) {
-	Logf("[i76.exe | gdi32.dll | GetTextExtentExPointA]\n");
+	I76_LOG("gdi32.dll", "GetTextExtentExPointA");
 	return original::GetTextExtentExPointA(hdc, lpszString, cchString, nMaxExtent, lpnFit, lpnDx, lpSize);
 }
 
 BOOL APIENTRY GetTextExtentPoint32A(HDC hdc, LPCSTR lpString, int c, LPSIZE psizl) {
-	Logf("[i76.exe | gdi32.dll | GetTextExtentPoint32A]\n");
+	I76_LOG("gdi32.dll", "GetTextExtentPoint32A");
 	return original::GetTextExtentPoint32A(hdc, lpString, c, psizl);
 }
 
 BOOL WINAPI GdiFlush(void) {
-	Logf("[i76.exe | gdi32.dll | GdiFlush]\n");
+	I76_LOG("gdi32.dll", "GdiFlush");
 	return original::GdiFlush();
 }
 
 UINT WINAPI RealizePalette(HDC hdc) {
-	Logf("[i76.exe | gdi32.dll | RealizePalette]\n");
+	I76_LOG("gdi32.dll", "RealizePalette");
 	return original::RealizePalette(hdc);
 }
 
 BOOL WINAPI Rectangle(HDC hdc, int left, int top, int right, int bottom) {
-	Logf("[i76.exe | gdi32.dll | Rectangle]\n");
+	I76_LOG("gdi32.dll", "Rectangle");
 	return original::Rectangle(hdc, left, top, right, bottom);
 }
 
 BOOL WINAPI RemoveFontResourceA(LPCSTR lpFileName) {
-	Logf("[i76.exe | gdi32.dll | RemoveFontResourceA]\n");
+	I76_LOG("gdi32.dll", "RemoveFontResourceA");
 	return original::RemoveFontResourceA(lpFileName);
 }
 
 HGDIOBJ WINAPI SelectObject(HDC hdc, HGDIOBJ h) {
-	Logf("[i76.exe | gdi32.dll | SelectObject]\n");
+	I76_LOG("gdi32.dll", "SelectObject");
 	return original::SelectObject(hdc, h);
 }
 
 HPALETTE WINAPI SelectPalette(HDC hdc, HPALETTE hPal, BOOL bForceBkgd) {
-	Logf("[i76.exe | gdi32.dll | SelectPalette]\n");
+	I76_LOG("gdi32.dll", "SelectPalette");
 	return original::SelectPalette(hdc, hPal, bForceBkgd);
 }
 
 COLORREF WINAPI SetBkColor(HDC hdc, COLORREF color) {
-	Logf("[i76.exe | gdi32.dll | SetBkColor]\n");
+	I76_LOG("gdi32.dll", "SetBkColor");
 	return original::SetBkColor(hdc, color);
 }
 
 int WINAPI SetBkMode(HDC hdc, int mode) {
-	Logf("[i76.exe | gdi32.dll | SetBkMode]\n");
+	I76_LOG("gdi32.dll", "SetBkMode");
 	return original::SetBkMode(hdc, mode);
 }
 
 int WINAPI SetDIBitsToDevice(HDC hdc, int xDest, int yDest, DWORD w, DWORD h, int xSrc, int ySrc, UINT StartScan, UINT cLines, CONST VOID * lpvBits, CONST BITMAPINFO * lpbmi, UINT ColorUse) {
-	Logf("[i76.exe | gdi32.dll | SetDIBitsToDevice]\n");
+	I76_LOG("gdi32.dll", "SetDIBitsToDevice");
 	return original::SetDIBitsToDevice(hdc, xDest, yDest, w, h, xSrc, ySrc, StartScan, cLines, lpvBits, lpbmi, ColorUse);
 }
 
 DWORD WINAPI SetMapperFlags(HDC hdc, DWORD flags) {
-	Logf("[i76.exe | gdi32.dll | SetMapperFlags]\n");
+	I76_LOG("gdi32.dll", "SetMapperFlags");
 	return original::SetMapperFlags(hdc, flags);
 }
 
 UINT WINAPI SetPaletteEntries(HPALETTE hpal, UINT iStart, UINT cEntries, CONST PALETTEENTRY *pPalEntries) {
-	Logf("[i76.exe | gdi32.dll | SetPaletteEntries]\n");
+	I76_LOG("gdi32.dll", "SetPaletteEntries");
 	return original::SetPaletteEntries(hpal, iStart, cEntries, pPalEntries);
 }
 
 COLORREF WINAPI SetTextColor(HDC hdc, COLORREF color) {
-	Logf("[i76.exe | gdi32.dll | SetTextColor]\n");
+	I76_LOG("gdi32.dll", "SetTextColor");
 	return original::SetTextColor(hdc, color);
 }
 
 BOOL WINAPI TextOutA(HDC hdc, int x, int y, LPCSTR lpString, int c) {
-	Logf("[i76.exe | gdi32.dll | TextOutA]\n");
+	I76_LOG("gdi32.dll", "TextOutA");
 	return original::TextOutA(hdc, x, y, lpString, c);
 }
 
 // kernel32.dll
 
 BOOL WINAPI CloseHandle(HANDLE hObject) {
-	Logf("[i76.exe | kernel32.dll | CloseHandle]\n");
+	I76_LOG("kernel32.dll", "CloseHandle");
 	return original::CloseHandle(hObject);
 }
 
 BOOL WINAPI CopyFileA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, BOOL bFailIfExists) {
-	Logf("[i76.exe | kernel32.dll | CopyFileA] from:'%s', to:'%s'\n", lpExistingFileName, lpNewFileName);
+	I76_LOG("kernel32.dll", "CopyFileA", "from:'%s', to:'%s'", lpExistingFileName, lpNewFileName);
 	return original::CopyFileA(lpExistingFileName, lpNewFileName, bFailIfExists);
 }
 
 HANDLE WINAPI CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {
-	Logf("[i76.exe | kernel32.dll | CreateFileA] '%s'\n", lpFileName);
+	I76_LOG("kernel32.dll", "CreateFileA", "'%s'", lpFileName);
 	return original::CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 }
 
 HANDLE WINAPI CreateFileMappingA(HANDLE hFile, LPSECURITY_ATTRIBUTES lpFileMappingAttributes, DWORD flProtect, DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, LPCSTR lpName) {
-	Logf("[i76.exe | kernel32.dll | CreateFileMappingA] '%s'\n", lpName);
+	I76_LOG("kernel32.dll", "CreateFileMappingA", "'%s'", lpName);
 	return original::CreateFileMappingA(hFile, lpFileMappingAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName);
 }
 
 BOOL WINAPI DeleteFileA(LPCSTR lpFileName) {
-	Logf("[i76.exe | kernel32.dll | DeleteFileA] '%s'\n", lpFileName);
+	I76_LOG("kernel32.dll", "DeleteFileA", "'%s'", lpFileName);
 	return original::DeleteFileA(lpFileName);
 }
 
 BOOL WINAPI FindClose(HANDLE hFindFile) {
-	Logf("[i76.exe | kernel32.dll | FindClose]\n");
+	I76_LOG("kernel32.dll", "FindClose");
 	return original::FindClose(hFindFile);
 }
 
 HANDLE WINAPI FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData) {
-	Logf("[i76.exe | kernel32.dll | FindFirstFileA] '%s'\n", lpFileName);
+	I76_LOG("kernel32.dll", "FindFirstFileA", "'%s'", lpFileName);
 	return original::FindFirstFileA(lpFileName, lpFindFileData);
 }
 
 BOOL WINAPI FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData) {
-	Logf("[i76.exe | kernel32.dll | FindNextFileA]\n");
+	I76_LOG("kernel32.dll", "FindNextFileA");
 	return original::FindNextFileA(hFindFile, lpFindFileData);
 }
 
 BOOL WINAPI FreeLibrary(HMODULE hLibModule) {
-	Logf("[i76.exe | kernel32.dll | FreeLibrary]\n");
+	I76_LOG("kernel32.dll", "FreeLibrary");
 	return original::FreeLibrary(hLibModule);
 }
 
 DWORD WINAPI GetCurrentDirectoryA(DWORD nBufferLength, LPSTR lpBuffer) {
-	Logf("[i76.exe | kernel32.dll | GetCurrentDirectoryA]\n");
+	I76_LOG("kernel32.dll", "GetCurrentDirectoryA");
 	return original::GetCurrentDirectoryA(nBufferLength, lpBuffer);
 }
 
 HANDLE WINAPI GetCurrentProcess() {
 #if LOG_VERBOSE
-	Logf("[i76.exe | kernel32.dll | GetCurrentProcess]\n");
+	I76_LOG("kernel32.dll", "GetCurrentProcess");
 #endif
 	return original::GetCurrentProcess();
 }
 
 UINT WINAPI GetDriveTypeA(LPCSTR lpRootPathName) {
-	Logf("[i76.exe | kernel32.dll | GetDriveTypeA] root:'%s'\n", lpRootPathName);
+	I76_LOG("kernel32.dll", "GetDriveTypeA", "root:'%s'", lpRootPathName);
 	return original::GetDriveTypeA(lpRootPathName);
 }
 
 BOOL WINAPI GetFileTime(HANDLE hFile, LPFILETIME lpCreationTime, LPFILETIME lpLastAccessTime, LPFILETIME lpLastWriteTime) {
-	Logf("[i76.exe | kernel32.dll | GetFileTime]\n");
+	I76_LOG("kernel32.dll", "GetFileTime");
 	return original::GetFileTime(hFile, lpCreationTime, lpLastAccessTime, lpLastWriteTime);
 }
 
 DWORD WINAPI GetLogicalDrives() {
-	Logf("[i76.exe | kernel32.dll | GetLogicalDrives]\n");
+	I76_LOG("kernel32.dll", "GetLogicalDrives");
 	return original::GetLogicalDrives();
 }
 
 HMODULE WINAPI GetModuleHandleA(LPCSTR lpModuleName) {
-	Logf("[i76.exe | kernel32.dll | GetModuleHandleA] '%s'\n", lpModuleName);
+	I76_LOG("kernel32.dll", "GetModuleHandleA", "'%s'", lpModuleName);
 	return original::GetModuleHandleA(lpModuleName);
 }
 
@@ -412,110 +414,110 @@ FARPROC WINAPI GetProcAddress(HMODULE hModule, LPCSTR lpProcName) {
 	if (zglide::IsModule(hModule))
 		return zglide::GetProcAddress(lpProcName);
 #endif
-	Logf("[i76.exe | kernel32.dll | GetProcAddress] proc:'%s'\n", lpProcName);
+	I76_LOG("kernel32.dll", "GetProcAddress", "proc:'%s'", lpProcName);
 	return original::GetProcAddress(hModule, lpProcName);
 }
 
 HANDLE WINAPI GetProcessHeap() {
-	Logf("[i76.exe | kernel32.dll | GetProcessHeap]\n");
+	I76_LOG("kernel32.dll", "GetProcessHeap");
 	return original::GetProcessHeap();
 }
 
 DWORD WINAPI GetTickCount() {
 #if LOG_VERBOSE
-	Logf("[i76.exe | kernel32.dll | GetTickCount]\n");
+	I76_LOG("kernel32.dll", "GetTickCount");
 #endif
 	return original::GetTickCount();
 }
 
 VOID WINAPI GetStartupInfoA(LPSTARTUPINFOA lpStartupInfo) {
-	Logf("[i76.exe | kernel32.dll | GetStartupInfoA]\n");
+	I76_LOG("kernel32.dll", "GetStartupInfoA");
 	original::GetStartupInfoA(lpStartupInfo);
 }
 
 LCID WINAPI GetSystemDefaultLCID() {
-	Logf("[i76.exe | kernel32.dll | GetSystemDefaultLCID]\n");
+	I76_LOG("kernel32.dll", "GetSystemDefaultLCID");
 	return original::GetSystemDefaultLCID();
 }
 
 BOOL WINAPI GetVolumeInformationA(LPCSTR lpRootPathName, LPSTR lpVolumeNameBuffer, DWORD nVolumeNameSize, LPDWORD lpVolumeSerialNumber, LPDWORD lpMaximumComponentLength, LPDWORD lpFileSystemFlags, LPSTR lpFileSystemNameBuffer, DWORD nFileSystemNameSize) {
-	Logf("[i76.exe | kernel32.dll | GetVolumeInformationA]\n");
+	I76_LOG("kernel32.dll", "GetVolumeInformationA");
 	return original::GetVolumeInformationA(lpRootPathName, lpVolumeNameBuffer, nVolumeNameSize, lpVolumeSerialNumber, lpMaximumComponentLength, lpFileSystemFlags, lpFileSystemNameBuffer, nFileSystemNameSize);
 }
 
 VOID WINAPI GetSystemInfo(LPSYSTEM_INFO lpSystemInfo) {
-	Logf("[i76.exe | kernel32.dll | GetSystemInfo]\n");
+	I76_LOG("kernel32.dll", "GetSystemInfo");
 	original::GetSystemInfo(lpSystemInfo);
 	// 386, 486 or 586 will result in call to _disable() which throws an exception
 	lpSystemInfo->dwProcessorType = 0;
 }
 
 VOID WINAPI GlobalMemoryStatus(LPMEMORYSTATUS lpBuffer) {
-	Logf("[i76.exe | kernel32.dll | GlobalMemoryStatus]\n");
+	I76_LOG("kernel32.dll", "GlobalMemoryStatus");
 	original::GlobalMemoryStatus(lpBuffer);
 }
 
 LPVOID WINAPI HeapAlloc(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes) {
 #if LOG_VERBOSE
-	Logf("[i76.exe | kernel32.dll | HeapAlloc]\n");
+	I76_LOG("kernel32.dll", "HeapAlloc");
 #endif
 	return original::HeapAlloc(hHeap, dwFlags, dwBytes);
 }
 
 SIZE_T WINAPI HeapCompact(HANDLE hHeap, DWORD dwFlags) {
 #if LOG_VERBOSE
-	Logf("[i76.exe | kernel32.dll | HeapCompact]\n");
+	I76_LOG("kernel32.dll", "HeapCompact");
 #endif
 	return original::HeapCompact(hHeap, dwFlags);
 }
 
 HANDLE WINAPI HeapCreate(DWORD flOptions, SIZE_T dwInitialSize, SIZE_T dwMaximumSize) {
 #if LOG_VERBOSE
-	Logf("[i76.exe | kernel32.dll | HeapCreate]\n");
+	I76_LOG("kernel32.dll", "HeapCreate");
 #endif
 	return original::HeapCreate(flOptions, dwInitialSize, dwMaximumSize);
 }
 
 BOOL WINAPI HeapDestroy(HANDLE hHeap) {
 #if LOG_VERBOSE
-	Logf("[i76.exe | kernel32.dll | HeapDestroy]\n");
+	I76_LOG("kernel32.dll", "HeapDestroy");
 #endif
 	return original::HeapDestroy(hHeap);
 }
 
 BOOL WINAPI HeapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem) {
 #if LOG_VERBOSE
-	Logf("[i76.exe | kernel32.dll | HeapFree]\n");
+	I76_LOG("kernel32.dll", "HeapFree");
 #endif
 	return original::HeapFree(hHeap, dwFlags, lpMem);
 }
 
 LPVOID WINAPI HeapReAlloc(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem, SIZE_T dwBytes) {
 #if LOG_VERBOSE
-	Logf("[i76.exe | kernel32.dll | HeapReAlloc]\n");
+	I76_LOG("kernel32.dll", "HeapReAlloc");
 #endif
 	return original::HeapReAlloc(hHeap, dwFlags, lpMem, dwBytes);
 }
 
 SIZE_T WINAPI HeapSize(HANDLE hHeap, DWORD dwFlags, LPCVOID lpMem) {
 #if LOG_VERBOSE
-	Logf("[i76.exe | kernel32.dll | HeapSize]\n");
+	I76_LOG("kernel32.dll", "HeapSize");
 #endif
 	return original::HeapSize(hHeap, dwFlags, lpMem);
 }
 
 LPSTR WINAPI lstrcatA(LPSTR lpString1, LPCSTR lpString2) {
-	Logf("[i76.exe | kernel32.dll | lstrcatA] '%s' '%s'\n", lpString1, lpString2);
+	I76_LOG("kernel32.dll", "lstrcatA", "'%s' '%s'", lpString1, lpString2);
 	return original::lstrcatA(lpString1, lpString2);
 }
 
 LPSTR WINAPI lstrcpyA(LPSTR lpString1, LPCSTR lpString2) {
-	Logf("[i76.exe | kernel32.dll | lstrcpyA] '%s'\n", lpString2);
+	I76_LOG("kernel32.dll", "lstrcpyA", "'%s'", lpString2);
 	return original::lstrcpyA(lpString1, lpString2);
 }
 
 HMODULE WINAPI LoadLibraryA(LPCSTR lpLibFileName) {
-	Logf("[i76.exe | kernel32.dll | LoadLibraryA] filename:'%s'\n", lpLibFileName);
+	I76_LOG("kernel32.dll", "LoadLibraryA", "filename:'%s'", lpLibFileName);
 	if (bx::strCmpI(lpLibFileName, I76SHELL_DLL) == 0)
 		return i76shell::Load();
 #if WRAP_ZGLIDE
@@ -526,44 +528,44 @@ HMODULE WINAPI LoadLibraryA(LPCSTR lpLibFileName) {
 }
 
 LPVOID WINAPI MapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap) {
-	Logf("[i76.exe | kernel32.dll | MapViewOfFile]\n");
+	I76_LOG("kernel32.dll", "MapViewOfFile");
 	return original::MapViewOfFile(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap);
 }
 
 VOID WINAPI OutputDebugStringA(LPCSTR lpOutputString) {
-	Logf("[i76.exe | kernel32.dll | OutputDebugStringA] '%s'\n", lpOutputString);
+	I76_LOG("kernel32.dll", "OutputDebugStringA", "'%s'", lpOutputString);
 	original::OutputDebugStringA(lpOutputString);
 }
 
 BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes) {
-	Logf("[i76.exe | kernel32.dll | SetFileAttributesA] filename:'%s'\n", lpFileName);
+	I76_LOG("kernel32.dll", "SetFileAttributesA", "filename:'%s'", lpFileName);
 	return original::SetFileAttributesA(lpFileName, dwFileAttributes);
 }
 
 BOOL WINAPI SetPriorityClass(HANDLE hProcess, DWORD dwPriorityClass) {
 #if LOG_VERBOSE
-	Logf("[i76.exe | kernel32.dll | SetPriorityClass]\n");
+	I76_LOG("kernel32.dll", "SetPriorityClass");
 #endif
 	return original::SetPriorityClass(hProcess, dwPriorityClass);
 }
 
 BOOL WINAPI UnmapViewOfFile(LPCVOID lpBaseAddress) {
-	Logf("[i76.exe | kernel32.dll | UnmapViewOfFile]\n");
+	I76_LOG("kernel32.dll", "UnmapViewOfFile");
 	return original::UnmapViewOfFile(lpBaseAddress);
 }
 
 LPVOID WINAPI VirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect) {
-	Logf("[i76.exe | kernel32.dll | VirtualAlloc]\n");
+	I76_LOG("kernel32.dll", "VirtualAlloc");
 	return original::VirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
 }
 
 BOOL WINAPI VirtualFree(LPVOID lpAddress, SIZE_T dwSize, DWORD dwFreeType) {
-	Logf("[i76.exe | kernel32.dll | VirtualFree]\n");
+	I76_LOG("kernel32.dll", "VirtualFree");
 	return original::VirtualFree(lpAddress, dwSize, dwFreeType);
 }
 
 SIZE_T WINAPI VirtualQuery(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength) {
-	Logf("[i76.exe | kernel32.dll | VirtualQuery]\n");
+	I76_LOG("kernel32.dll", "VirtualQuery");
 	return original::VirtualQuery(lpAddress, lpBuffer, dwLength);
 }
 
@@ -572,126 +574,123 @@ SIZE_T WINAPI VirtualQuery(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer
 //void *StrLookup_Global_Object;
 
 void *StrLookupCreate(char *_filename) {
-	Logf("[i76.exe | strlkup.dll | StrLookupCreate] filename:'%s'\n", _filename);
+	I76_LOG("strlkup.dll", "StrLookupCreate", "filename:'%s'", _filename);
 	return original::StrLookupCreate(_filename);
 }
 
 void StrLookupDestroy(void *_obj) {
-	Logf("[i76.exe | strlkup.dll | StrLookupDestroy]\n");
+	I76_LOG("strlkup.dll", "StrLookupDestroy");
 	return original::StrLookupDestroy(_obj);
 }
 
 char *StrLookupFind(void *_obj, char *_string) {
-	Logf("[i76.exe | strlkup.dll | StrLookupFind] string:'%s'\n", _string);
+	I76_LOG("strlkup.dll", "StrLookupFind", "string:'%s'", _string);
 	return original::StrLookupFind(_obj, _string);
 }
 
 int StrLookupFormat(char *buffer_, char *_format, ...) {
-	Logf("[i76.exe | strlkup.dll | StrLookupFormat]\n");
+	I76_LOG("strlkup.dll", "StrLookupFormat");
 	return original::StrLookupFormat(buffer_, _format);
 }
 
 // user32.dll
 
 BOOL WINAPI AdjustWindowRect(LPRECT lpRect, DWORD dwStyle, BOOL bMenu) {
-	Logf("[i76.exe | user32.dll | AdjustWindowRect]\n");
+	I76_LOG("user32.dll", "AdjustWindowRect");
 	return original::AdjustWindowRect(lpRect, dwStyle, bMenu);
 }
 
 HDC WINAPI BeginPaint(HWND hWnd, LPPAINTSTRUCT lpPaint) {
-	Logf("[i76.exe | user32.dll | BeginPaint]\n");
+	I76_LOG("user32.dll", "BeginPaint");
 	return original::BeginPaint(hWnd, lpPaint);
 }
 
 BOOL WINAPI ClientToScreen(HWND hWnd, LPPOINT lpPoint) {
-	Logf("[i76.exe | user32.dll | ClientToScreen]\n");
+	I76_LOG("user32.dll", "ClientToScreen");
 	return original::ClientToScreen(hWnd, lpPoint);
 }
 
 BOOL WINAPI ClipCursor(CONST RECT *lpRect) {
-	Logf("[i76.exe | user32.dll | ClipCursor]");
 	if (lpRect)
-		Logf(" left:%d, right:%d, top:%d, bottom:%d\n", lpRect->left, lpRect->right, lpRect->top, lpRect->bottom);
+		I76_LOG("user32.dll", "ClipCursor", "left:%d, right:%d, top:%d, bottom:%d", lpRect->left, lpRect->right, lpRect->top, lpRect->bottom);
 	else
-		Logf("\n");
+		I76_LOG("user32.dll", "ClipCursor");
 	return original::ClipCursor(lpRect);
 }
 
 HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam) {
-	Logf("[i76.exe | user32.dll | CreateWindowExA] classname:'%s', window name:'%s', width:%d, height:%d\n", lpClassName, lpWindowName, nWidth, nHeight);
+	I76_LOG("user32.dll", "CreateWindowExA", "classname:'%s', window name:'%s', width:%d, height:%d", lpClassName, lpWindowName, nWidth, nHeight);
 	return original::CreateWindowExA(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
 }
 
 LRESULT WINAPI DefWindowProcA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
 #if LOG_VERBOSE
-	Logf("[i76.exe | user32.dll | DefWindowProcA] msg:");
-	PrintMsg(Msg);
-	Logf("\n");
+	I76_LOG("user32.dll", "DefWindowProcA", "msg:%s (%u)", MsgToString(Msg), Msg);
 #endif
 	return original::DefWindowProcA(hWnd, Msg, wParam, lParam);
 }
 
 BOOL WINAPI DestroyWindow(HWND hWnd) {
-	Logf("[i76.exe | user32.dll | DestroyWindow]\n");
+	I76_LOG("user32.dll", "DestroyWindow");
 	return original::DestroyWindow(hWnd);
 }
 
 LRESULT WINAPI DispatchMessageA(CONST MSG *lpMsg) {
 #if LOG_VERBOSE
-	Logf("[i76.exe | user32.dll | DispatchMessageA]\n");
+	I76_LOG("user32.dll", "DispatchMessageA");
 #endif
 	return original::DispatchMessageA(lpMsg);
 }
 
 BOOL WINAPI EndPaint(HWND hWnd, CONST PAINTSTRUCT *lpPaint) {
-	Logf("[i76.exe | user32.dll | EndPaint]\n");
+	I76_LOG("user32.dll", "EndPaint");
 	return original::EndPaint(hWnd, lpPaint);
 }
 
 HWND WINAPI FindWindowA(LPCSTR lpClassName, LPCSTR lpWindowName) {
-	Logf("[i76.exe | user32.dll | FindWindowA] classname:'%s', window name:'%s'\n", lpClassName, lpWindowName);
+	I76_LOG("user32.dll", "FindWindowA", "classname:'%s', window name:'%s'", lpClassName, lpWindowName);
 	return original::FindWindowA(lpClassName, lpWindowName);
 }
 
 SHORT WINAPI GetAsyncKeyState(int vKey) {
-	Logf("[i76.exe | user32.dll | GetAsyncKeyState] key:%d\n", vKey);
+	I76_LOG("user32.dll", "GetAsyncKeyState", "key:%d", vKey);
 	return original::GetAsyncKeyState(vKey);
 }
 
 BOOL WINAPI GetClientRect(HWND hWnd, LPRECT lpRect) {
-	Logf("[i76.exe | user32.dll | GetClientRect]\n");
+	I76_LOG("user32.dll", "GetClientRect");
 	return original::GetClientRect(hWnd, lpRect);
 }
 
 BOOL WINAPI GetCursorPos(LPPOINT lpPoint) {
-	Logf("[i76.exe | user32.dll | GetCursorPos]\n");
+	I76_LOG("user32.dll", "GetCursorPos");
 	return original::GetCursorPos(lpPoint);
 }
 
 HDC WINAPI GetDC(HWND hWnd) {
-	Logf("[i76.exe | user32.dll | GetDC]\n");
+	I76_LOG("user32.dll", "GetDC");
 	return original::GetDC(hWnd);
 }
 
 HWND WINAPI GetFocus(VOID) {
 #if LOG_VERBOSE
-	Logf("[i76.exe | user32.dll | GetFocus]\n");
+	I76_LOG("user32.dll", "GetFocus");
 #endif
 	return original::GetFocus();
 }
 
 int WINAPI GetKeyboardType(int nTypeFlag) {
-	Logf("[i76.exe | user32.dll | GetKeyboardType]\n");
+	I76_LOG("user32.dll", "GetKeyboardType");
 	return original::GetKeyboardType(nTypeFlag);
 }
 
 SHORT WINAPI GetKeyState(int nVirtKey) {
-	Logf("[i76.exe | user32.dll | GetKeyState] key:%d\n", nVirtKey);
+	I76_LOG("user32.dll", "GetKeyState", "key:%d", nVirtKey);
 	return original::GetKeyState(nVirtKey);
 }
 
 int WINAPI GetSystemMetrics(int nIndex) {
-	Logf("[i76.exe | user32.dll | GetSystemMetrics] nIndex:%d\n", nIndex);
+	I76_LOG("user32.dll", "GetSystemMetrics", "nIndex:%d", nIndex);
 #if FORCE_1024_RESOLUTION
 	if (nIndex == SM_CXSCREEN)
 		return 1024;
@@ -702,37 +701,35 @@ int WINAPI GetSystemMetrics(int nIndex) {
 }
 
 BOOL WINAPI GetWindowRect(HWND hWnd, LPRECT lpRect) {
-	Logf("[i76.exe | user32.dll | GetWindowRect]\n");
+	I76_LOG("user32.dll", "GetWindowRect");
 	return original::GetWindowRect(hWnd, lpRect);
 }
 
 HCURSOR WINAPI LoadCursorA(HINSTANCE hInstance, LPCSTR lpCursorName) {
-	Logf("[i76.exe | user32.dll | LoadCursorA]\n");
+	I76_LOG("user32.dll", "LoadCursorA");
 	return original::LoadCursorA(hInstance, lpCursorName);
 }
 
 UINT WINAPI MapVirtualKeyA(UINT uCode, UINT uMapType) {
-	Logf("[i76.exe | user32.dll | MapVirtualKeyA]\n");
+	I76_LOG("user32.dll", "MapVirtualKeyA");
 	return original::MapVirtualKeyA(uCode, uMapType);
 }
 
 int WINAPI MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
-	Logf("[i76.exe | user32.dll | MessageBoxA] text:'%s' caption:'%s'\n", lpText, lpCaption);
+	I76_LOG("user32.dll", "MessageBoxA", "text:'%s' caption:'%s'", lpText, lpCaption);
 	return original::MessageBoxA(hWnd, lpText, lpCaption, uType);
 }
 
 BOOL WINAPI PeekMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg) {
 #if LOG_VERBOSE
-	Logf("[i76.exe | user32.dll | PeekMessageA]\n");
+	I76_LOG("user32.dll", "PeekMessageA");
 #endif
 	return original::PeekMessageA(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg);
 }
 
 static LRESULT __stdcall WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 #if LOG_WINPROC
-	Logf("   WNDPROC msg:");
-	PrintMsg(uMsg);
-	Logf("\n");
+	Logf("   WNDPROC msg:%s (%u)", MsgToString(uMsg), uMsg);
 #endif
 	return original::windowProc(hWnd, uMsg, wParam, lParam);
 }
@@ -740,101 +737,101 @@ static LRESULT __stdcall WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 ATOM WINAPI RegisterClassA(CONST WNDCLASSA *lpWndClass) {
 	original::windowProc = lpWndClass->lpfnWndProc;
 	((WNDCLASSA *)lpWndClass)->lpfnWndProc = WindowProc;
-	Logf("[i76.exe | user32.dll | RegisterClassA] name:%s\n", lpWndClass->lpszClassName);
+	I76_LOG("user32.dll", "RegisterClassA", "name:%s", lpWndClass->lpszClassName);
 	return original::RegisterClassA(lpWndClass);
 }
 
 int WINAPI ReleaseDC(HWND hWnd, HDC hDC) {
-	Logf("[i76.exe | user32.dll | ReleaseDC]\n");
+	I76_LOG("user32.dll", "ReleaseDC");
 	return original::ReleaseDC(hWnd, hDC);
 }
 
 BOOL WINAPI ScreenToClient(HWND hWnd, LPPOINT lpPoint) {
-	Logf("[i76.exe | user32.dll | ScreenToClient] x:%d, y:%d\n", lpPoint->x, lpPoint->y);
+	I76_LOG("user32.dll", "ScreenToClient", "x:%d, y:%d", lpPoint->x, lpPoint->y);
 	return original::ScreenToClient(hWnd, lpPoint);
 }
 
 LRESULT WINAPI SendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
-	Logf("[i76.exe | user32.dll | SendMessageA]\n");
+	I76_LOG("user32.dll", "SendMessageA");
 	return original::SendMessageA(hWnd, Msg, wParam, lParam);
 }
 
 HCURSOR WINAPI SetCursor(HCURSOR hCursor) {
-	Logf("[i76.exe | user32.dll | SetCursor]\n");
+	I76_LOG("user32.dll", "SetCursor");
 	return original::SetCursor(hCursor);
 }
 
 BOOL WINAPI SetCursorPos(int X, int Y) {
-	Logf("[i76.exe | user32.dll | SetCursorPos] x:%d, y:%d\n", X, Y);
+	I76_LOG("user32.dll", "SetCursorPos", "x:%d, y:%d", X, Y);
 	return original::SetCursorPos(X, Y);
 }
 
 HWND WINAPI SetFocus(HWND hWnd) {
-	Logf("[i76.exe | user32.dll | SetFocus]\n");
+	I76_LOG("user32.dll", "SetFocus");
 	return original::SetFocus(hWnd);
 }
 
 BOOL WINAPI SetMenu(HWND hWnd, HMENU hMenu) {
-	Logf("[i76.exe | user32.dll | SetMenu]\n");
+	I76_LOG("user32.dll", "SetMenu");
 	return original::SetMenu(hWnd, hMenu);
 }
 
 BOOL WINAPI SetRect(LPRECT lprc, int xLeft, int yTop, int xRight,int yBottom) {
-	Logf("[i76.exe | user32.dll | SetRect]\n");
+	I76_LOG("user32.dll", "SetRect");
 	return original::SetRect(lprc, xLeft, yTop, xRight, yBottom);
 }
 
 LONG WINAPI SetWindowLongA(HWND hWnd, int nIndex, LONG dwNewLong) {
-	Logf("[i76.exe | user32.dll | SetWindowLongA]\n");
+	I76_LOG("user32.dll", "SetWindowLongA");
 	return original::SetWindowLongA(hWnd, nIndex, dwNewLong);
 }
 
 BOOL WINAPI SetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags) {
-	Logf("[i76.exe | user32.dll | SetWindowPos]\n");
+	I76_LOG("user32.dll", "SetWindowPos");
 	return original::SetWindowPos(hWnd, hWndInsertAfter, X, Y, cx, cy, uFlags);
 }
 
 int WINAPI ShowCursor(BOOL bShow) {
-	Logf("[i76.exe | user32.dll | ShowCursor] value:%s\n", bShow ? "true" : "false");
+	I76_LOG("user32.dll", "ShowCursor", "value:%s", bShow ? "true" : "false");
 	return original::ShowCursor(bShow);
 }
 
 BOOL WINAPI ShowWindow(HWND hWnd, int nCmdShow) {
-	Logf("[i76.exe | user32.dll | ShowWindow]\n");
+	I76_LOG("user32.dll", "ShowWindow");
 	return original::ShowWindow(hWnd, nCmdShow);
 }
 
 BOOL WINAPI TranslateMessage(CONST MSG *lpMsg) {
 #if LOG_VERBOSE
-	Logf("[i76.exe | user32.dll | TranslateMessage]\n");
+	I76_LOG("user32.dll", "TranslateMessage");
 #endif
 	return original::TranslateMessage(lpMsg);
 }
 
 BOOL WINAPI UpdateWindow(HWND hWnd) {
-	Logf("[i76.exe | user32.dll | UpdateWindow]\n");
+	I76_LOG("user32.dll", "UpdateWindow");
 	return original::UpdateWindow(hWnd);
 }
 
 BOOL WINAPI ValidateRect(HWND hWnd, CONST RECT *lpRect) {
-	Logf("[i76.exe | user32.dll | ValidateRect]\n");
+	I76_LOG("user32.dll", "ValidateRect");
 	return original::ValidateRect(hWnd, lpRect);
 }
 
 int WINAPIV wsprintfA(LPSTR arg1, LPCSTR arg2, ...) {
-	Logf("[i76.exe | user32.dll | wsprintfA]\n");
+	I76_LOG("user32.dll", "wsprintfA");
 	return 0;
 }
 
 int WINAPI wvsprintfA(LPSTR arg1, LPCSTR arg2, va_list arglist) {
-	Logf("[i76.exe | user32.dll | wvsprintfA]\n");
+	I76_LOG("user32.dll", "wvsprintfA");
 	return original::wvsprintfA(arg1, arg2, arglist);
 }
 
 // win32.dll
 
 MCIERROR WINAPI mciSendCommandA(MCIDEVICEID mciId, UINT uMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2) {
-	Logf("[i76.exe | win32.dll | mciSendCommandA]\n");
+	I76_LOG("win32.dll", "mciSendCommandA");
 	return original::mciSendCommandA(mciId, uMsg, dwParam1, dwParam2);
 }
 

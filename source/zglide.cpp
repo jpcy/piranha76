@@ -9,6 +9,8 @@
 loaded by i76.exe at 0x00426900
 */
 
+#define ZGLIDE_LOG(_function, ...) LogFunctionf(I76_EXE, ZGLIDE_DLL, _function, __VA_ARGS__)
+
 namespace zglide {
 namespace original {
 
@@ -43,7 +45,7 @@ namespace wrap {
 // just wraps grSstQueryBoards
 // returns 1 on success (number of graphics subsystems)
 int CheckFunc(void *hwConfig) {
-	Logf("[" ZGLIDE_DLL " | export | CheckFunc]\n");
+	ZGLIDE_LOG("CheckFunc");
 	int result = original::CheckFunc(hwConfig);
 	Logf("   %d\n", result);
 	return result;
@@ -59,7 +61,7 @@ int CheckFunc(void *hwConfig) {
 // _args1[16] is 480
 // returns 0 on success
 int FirstDevice(int *_arg1) {
-	Logf("[" ZGLIDE_DLL " | export | FirstDevice]\n");
+	ZGLIDE_LOG("FirstDevice");
 	/*int copy[28];
 	memset(copy, 0, 28 * 4);
 	copy[1] = 16;
@@ -75,114 +77,114 @@ int FirstDevice(int *_arg1) {
 // always returns 0
 int GetFuncDesc(char *_arg1, int *_arg2, int _arg3) {
 	// _arg3 is always 0
-	Logf("[" ZGLIDE_DLL " | export | GetFuncDesc]\n");
+	ZGLIDE_LOG("GetFuncDesc");
 	return original::GetFuncDesc(_arg1, _arg2, _arg3);
 	// _arg1 will be RASTER
 	// _arg2 should be 0, 1 or 2
 }
 
 void GetNumDevice() {
-	Logf("[" ZGLIDE_DLL " | export | GetNumDevice]\n");
+	ZGLIDE_LOG("GetNumDevice");
 }
 
 // & 1 - use wbuffer
 // & 2 - use fog
 // see FirstDevice
 int GetSocketCaps() {
-	Logf("[" ZGLIDE_DLL " | export | GetSocketCaps]\n");
+	ZGLIDE_LOG("GetSocketCaps");
 	return original::GetSocketCaps();
 }
 
 int LastDevice() {
-	Logf("[" ZGLIDE_DLL " | export | LastDevice]\n");
+	ZGLIDE_LOG("LastDevice");
 	int result =  original::LastDevice();
 	Logf("   %d\n", result);
 	return result;
 }
 
 int LockDisplay(int *_arg1) {
-	Logf("[" ZGLIDE_DLL " | export | LockDisplay] %d\n", *_arg1);
+	ZGLIDE_LOG("LockDisplay", "%d", *_arg1);
 	int result = original::LockDisplay(_arg1);
 	Logf("   %d\n", result);
 	return result;
 }
 
 void LostDeviceDisplay() {
-	Logf("[" ZGLIDE_DLL " | export | LostDeviceDisplay]\n");
+	ZGLIDE_LOG("LostDeviceDisplay");
 }
 
 void PreloadTexture() {
-	Logf("[" ZGLIDE_DLL " | export | PreloadTexture]\n");
+	ZGLIDE_LOG("PreloadTexture");
 }
 
 void RefreshDisplay() {
-	Logf("[" ZGLIDE_DLL " | export | RefreshDisplay]\n");
+	ZGLIDE_LOG("RefreshDisplay");
 }
 
 void Render() {
-	Logf("[" ZGLIDE_DLL " | export | Render]\n");
+	ZGLIDE_LOG("Render");
 }
 
 void RenderNoClip() {
-	Logf("[" ZGLIDE_DLL " | export | RenderNoClip]\n");
+	ZGLIDE_LOG("RenderNoClip");
 }
 
 void RenderRefresh() {
-	Logf("[" ZGLIDE_DLL " | export | RenderRefresh]\n");
+	ZGLIDE_LOG("RenderRefresh");
 }
 
 void RestoreDevice() {
-	Logf("[" ZGLIDE_DLL " | export | RestoreDevice]\n");
+	ZGLIDE_LOG("RestoreDevice");
 }
 
 void SetLumaTable() {
-	Logf("[" ZGLIDE_DLL " | export | SetLumaTable]\n");
+	ZGLIDE_LOG("SetLumaTable");
 }
 
 // always returns 0
 int SetState(int _arg1, int _arg2) {
-	Logf("[" ZGLIDE_DLL " | export | SetState] %d %d\n", _arg1, _arg2);
+	ZGLIDE_LOG("SetState", "%d %d\n", _arg1, _arg2);
 	return original::SetState(_arg1, _arg2);
 }
 
 void SetTexturePalette() {
-	Logf("[" ZGLIDE_DLL " | export | SetTexturePalette]\n");
+	ZGLIDE_LOG("SetTexturePalette");
 }
 
 // just wraps grLfbUnlock
 int UnlockDisplay() {
-	Logf("[" ZGLIDE_DLL " | export | UnlockDisplay]\n");
+	ZGLIDE_LOG("UnlockDisplay");
 	int result = original::UnlockDisplay();
 	Logf("   %d\n", result);
 	return result;
 }
 
 void UpdateTexture() {
-	Logf("[" ZGLIDE_DLL " | export | UpdateTexture]\n");
+	ZGLIDE_LOG("UpdateTexture");
 }
 
 } // namespace wrap
 
 static WrappedFunc s_wrappedExports[] = {
-	WRAPPED_FUNC("zglide.dll", CheckFunc),
-	WRAPPED_FUNC("zglide.dll", FirstDevice),
-	WRAPPED_FUNC("zglide.dll", GetFuncDesc),
-	WRAPPED_FUNC("zglide.dll", GetNumDevice),
-	WRAPPED_FUNC("zglide.dll", GetSocketCaps),
-	WRAPPED_FUNC("zglide.dll", LastDevice),
-	WRAPPED_FUNC("zglide.dll", LockDisplay),
-	WRAPPED_FUNC("zglide.dll", LostDeviceDisplay),
-	WRAPPED_FUNC("zglide.dll", PreloadTexture),
-	WRAPPED_FUNC("zglide.dll", RefreshDisplay),
-	WRAPPED_FUNC("zglide.dll", Render),
-	WRAPPED_FUNC("zglide.dll", RenderNoClip),
-	WRAPPED_FUNC("zglide.dll", RenderRefresh),
-	WRAPPED_FUNC("zglide.dll", RestoreDevice),
-	WRAPPED_FUNC("zglide.dll", SetLumaTable),
-	WRAPPED_FUNC("zglide.dll", SetState),
-	WRAPPED_FUNC("zglide.dll", SetTexturePalette),
-	WRAPPED_FUNC("zglide.dll", UnlockDisplay),
-	WRAPPED_FUNC("zglide.dll", UpdateTexture)
+	WRAPPED_FUNC(ZGLIDE_DLL, CheckFunc),
+	WRAPPED_FUNC(ZGLIDE_DLL, FirstDevice),
+	WRAPPED_FUNC(ZGLIDE_DLL, GetFuncDesc),
+	WRAPPED_FUNC(ZGLIDE_DLL, GetNumDevice),
+	WRAPPED_FUNC(ZGLIDE_DLL, GetSocketCaps),
+	WRAPPED_FUNC(ZGLIDE_DLL, LastDevice),
+	WRAPPED_FUNC(ZGLIDE_DLL, LockDisplay),
+	WRAPPED_FUNC(ZGLIDE_DLL, LostDeviceDisplay),
+	WRAPPED_FUNC(ZGLIDE_DLL, PreloadTexture),
+	WRAPPED_FUNC(ZGLIDE_DLL, RefreshDisplay),
+	WRAPPED_FUNC(ZGLIDE_DLL, Render),
+	WRAPPED_FUNC(ZGLIDE_DLL, RenderNoClip),
+	WRAPPED_FUNC(ZGLIDE_DLL, RenderRefresh),
+	WRAPPED_FUNC(ZGLIDE_DLL, RestoreDevice),
+	WRAPPED_FUNC(ZGLIDE_DLL, SetLumaTable),
+	WRAPPED_FUNC(ZGLIDE_DLL, SetState),
+	WRAPPED_FUNC(ZGLIDE_DLL, SetTexturePalette),
+	WRAPPED_FUNC(ZGLIDE_DLL, UnlockDisplay),
+	WRAPPED_FUNC(ZGLIDE_DLL, UpdateTexture)
 };
 
 static MemoryModuleUserData s_memoryModuleUserData;

@@ -3,9 +3,15 @@
 #include <stdint.h>
 #include "MemoryModule.h"
 
+#define DDRAW_DLL "ddraw.dll"
+#define I76_EXE "i76.exe"
+#define I76SHELL_DLL "i76shell.dll"
+#define ZGLIDE_DLL "zglide.dll"
+
 #define LOG_IMPORTS 0
 #define LOG_VERBOSE 0
 #define LOG_WINPROC 0
+//#define FUNCTION_LOG_FILTER_MODULE DDRAW_DLL
 #define FORCE_ENUM_DISPLAY_MODE_16BPP 0
 #define FORCE_1024_RESOLUTION 0
 #define FORCE_WINDOWED 0
@@ -24,7 +30,8 @@ struct ArrayView
 #define CHECK_HR_RETURN(func) { HRESULT hr = (func); if (hr) Logf("   HRESULT: %u\n", hr); return hr; }
 
 void Logf(const char *_format, ...);
-void PrintMsg(uint32_t msg);
+void LogFunctionf(const char *_parentModule, const char *_module, const char *_function, const char *_argsFormat = nullptr, ...);
+const char *MsgToString(uint32_t _msg);
 
 struct Library
 {

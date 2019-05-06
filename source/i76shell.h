@@ -1,7 +1,5 @@
 #pragma once
 
-#define I76SHELL_DLL "i76shell.dll"
-
 namespace i76shell {
 
 HMODULE Load();
