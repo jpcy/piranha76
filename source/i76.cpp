@@ -171,14 +171,14 @@ LSTATUS APIENTRY RegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGS
 	return status;
 }
 
-LSTATUS APIENTRY RegCloseKey(HKEY hKey) {
+LSTATUS APIENTRY RegCloseKey(HKEY /*hKey*/) {
 	I76_LOG("advapi32.dll", "RegCloseKey");
 	//return original::RegCloseKey(hKey);
 	return 0;
 }
 
-LSTATUS APIENTRY RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData) {
-	I76_LOG("advapi32.dll", "RegQueryValueExA");
+LSTATUS APIENTRY RegQueryValueExA(HKEY /*hKey*/, LPCSTR lpValueName, LPDWORD /*lpReserved*/, LPDWORD /*lpType*/, LPBYTE lpData, LPDWORD /*lpcbData*/) {
+	I76_LOG("advapi32.dll", "RegQueryValueExA", "%s", lpValueName);
 	//return original::RegQueryValueExA(hKey, lpValueName, lpReserved, lpType, lpData, lpcbData);
 	*lpData = 48;
 	return 0;
@@ -186,7 +186,7 @@ LSTATUS APIENTRY RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReser
 
 LSTATUS APIENTRY RegCreateKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition ) {
 	I76_LOG("advapi32.dll", "RegCreateKeyExA", "sub key:'%s'", lpSubKey);
-	LSTATUS status = original::RegCreateKeyExA(hKey, lpSubKey, Reserved, lpClass, dwOptions, samDesired, lpSecurityAttributes, phkResult, lpdwDisposition);
+	/*LSTATUS status = */original::RegCreateKeyExA(hKey, lpSubKey, Reserved, lpClass, dwOptions, samDesired, lpSecurityAttributes, phkResult, lpdwDisposition);
 	return 0;
 	//return status;
 }
@@ -819,12 +819,16 @@ BOOL WINAPI ValidateRect(HWND hWnd, CONST RECT *lpRect) {
 }
 
 int WINAPIV wsprintfA(LPSTR arg1, LPCSTR arg2, ...) {
-	I76_LOG("user32.dll", "wsprintfA");
-	return 0;
+	I76_LOG("user32.dll", "wsprintfA", "%s", arg2);
+	va_list arglist;
+	va_start(arglist, arg2);
+	int result = original::wvsprintfA(arg1, arg2, arglist);
+	va_end(arglist);
+	return result;
 }
 
 int WINAPI wvsprintfA(LPSTR arg1, LPCSTR arg2, va_list arglist) {
-	I76_LOG("user32.dll", "wvsprintfA");
+	I76_LOG("user32.dll", "wvsprintfA", "%s", arg2);
 	return original::wvsprintfA(arg1, arg2, arglist);
 }
 
