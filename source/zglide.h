@@ -1,3 +1,5 @@
+#pragma once
+
 #define ZGLIDE_DLL "zglide.dll"
 
 namespace zglide {

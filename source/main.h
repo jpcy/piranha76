@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <stdint.h>
+#include "MemoryModule.h"
 
 #define LOG_IMPORTS 0
 #define LOG_VERBOSE 0
