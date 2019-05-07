@@ -517,7 +517,20 @@ HRESULT __stdcall CreatePalette(IDirectDraw_Wrapped *_this, DWORD arg1, LPPALETT
 }
 
 HRESULT __stdcall CreateSurface(IDirectDraw_Wrapped *_this, LPDDSURFACEDESC arg1, IDirectDrawSurface_Wrapped **arg2, IUnknown *arg3) {
-	DDRAW_LOG("IDirectDraw::CreateSurface", "%ux%u", arg1->dwWidth, arg1->dwHeight);
+	DDRAW_LOG("IDirectDraw::CreateSurface", "flags:%u", arg1->dwFlags);
+	if (arg1->dwFlags & (DDSD_WIDTH | DDSD_HEIGHT))
+		Logf("   size:%ux%u\n", arg1->dwWidth, arg1->dwHeight);
+	if (arg1->dwFlags & DDSD_CAPS) {
+		Logf("   caps:%u\n", arg1->ddsCaps.dwCaps);
+		if (arg1->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+			Logf("      primary surface\n");
+		if (arg1->ddsCaps.dwCaps & DDSCAPS_OFFSCREENPLAIN)
+			Logf("      offscreen plain\n");
+		if (arg1->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY)
+			Logf("      system memory\n");
+		if (arg1->ddsCaps.dwCaps & ~(DDSCAPS_PRIMARYSURFACE | DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY))
+			Logf("      *unknown flags*\n");
+	}
 	LPDIRECTDRAWSURFACE original;
 	HRESULT hr = _this->original->lpVtbl->CreateSurface(_this->original, arg1, &original, arg3);
 	if (hr) {
