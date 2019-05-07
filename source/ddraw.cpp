@@ -39,26 +39,26 @@ struct IDirectDrawSurface_Wrapped;
 
 struct IDirectDrawClipperVtbl_Wrapped
 {
-	HRESULT (__stdcall *QueryInterface)(IDirectDrawClipper_Wrapped *_this, REFIID riid, LPVOID FAR * ppvObj);
+	HRESULT (__stdcall *QueryInterface)(IDirectDrawClipper_Wrapped *_this, REFIID riid, LPVOID * ppvObj);
 	ULONG (__stdcall *AddRef)(IDirectDrawClipper_Wrapped *_this);
 	ULONG (__stdcall *Release)(IDirectDrawClipper_Wrapped *_this);
 	HRESULT (__stdcall *GetClipList)(IDirectDrawClipper_Wrapped *_this, LPRECT arg1, LPRGNDATA arg2, LPDWORD arg3);
-	HRESULT (__stdcall *GetHWnd)(IDirectDrawClipper_Wrapped *_this, HWND FAR *arg1);
+	HRESULT (__stdcall *GetHWnd)(IDirectDrawClipper_Wrapped *_this, HWND *arg1);
 	HRESULT (__stdcall *Initialize)(IDirectDrawClipper_Wrapped *_this, LPDIRECTDRAW arg1, DWORD arg2);
-	HRESULT (__stdcall *IsClipListChanged)(IDirectDrawClipper_Wrapped *_this, BOOL FAR *arg1);
+	HRESULT (__stdcall *IsClipListChanged)(IDirectDrawClipper_Wrapped *_this, BOOL *arg1);
 	HRESULT (__stdcall *SetClipList)(IDirectDrawClipper_Wrapped *_this, LPRGNDATA arg1, DWORD arg2);
 	HRESULT (__stdcall *SetHWnd)(IDirectDrawClipper_Wrapped *_this, DWORD arg1, HWND arg2);
 };
 
 struct IDirectDrawClipper_Wrapped
 {
-	IDirectDrawClipperVtbl_Wrapped FAR *lpVtbl;
+	IDirectDrawClipperVtbl_Wrapped *lpVtbl;
 	LPDIRECTDRAWCLIPPER original;
 };
 
 struct IDirectDrawSurfaceVtbl_Wrapped
 {
-	HRESULT (__stdcall *QueryInterface)(IDirectDrawSurface_Wrapped *_this, REFIID riid, LPVOID FAR * ppvObj);
+	HRESULT (__stdcall *QueryInterface)(IDirectDrawSurface_Wrapped *_this, REFIID riid, LPVOID * ppvObj);
 	ULONG (__stdcall *AddRef)(IDirectDrawSurface_Wrapped *_this);
 	ULONG (__stdcall *Release)(IDirectDrawSurface_Wrapped *_this);
 	HRESULT (__stdcall *AddAttachedSurface)(IDirectDrawSurface_Wrapped *_this, IDirectDrawSurface_Wrapped *arg1);
@@ -70,15 +70,15 @@ struct IDirectDrawSurfaceVtbl_Wrapped
 	HRESULT (__stdcall *EnumAttachedSurfaces)(IDirectDrawSurface_Wrapped *_this, LPVOID arg1, LPDDENUMSURFACESCALLBACK arg2);
 	HRESULT (__stdcall *EnumOverlayZOrders)(IDirectDrawSurface_Wrapped *_this, DWORD arg1, LPVOID arg2, LPDDENUMSURFACESCALLBACK arg3);
 	HRESULT (__stdcall *Flip)(IDirectDrawSurface_Wrapped *_this, IDirectDrawSurface_Wrapped *arg1, DWORD arg2);
-	HRESULT (__stdcall *GetAttachedSurface)(IDirectDrawSurface_Wrapped *_this, LPDDSCAPS arg1, LPDIRECTDRAWSURFACE FAR * arg2);
+	HRESULT (__stdcall *GetAttachedSurface)(IDirectDrawSurface_Wrapped *_this, LPDDSCAPS arg1, LPDIRECTDRAWSURFACE * arg2);
 	HRESULT (__stdcall *GetBltStatus)(IDirectDrawSurface_Wrapped *_this, DWORD arg1);
 	HRESULT (__stdcall *GetCaps)(IDirectDrawSurface_Wrapped *_this, LPDDSCAPS arg1);
-	HRESULT (__stdcall *GetClipper)(IDirectDrawSurface_Wrapped *_this, LPDIRECTDRAWCLIPPER FAR * arg1);
+	HRESULT (__stdcall *GetClipper)(IDirectDrawSurface_Wrapped *_this, LPDIRECTDRAWCLIPPER * arg1);
 	HRESULT (__stdcall *GetColorKey)(IDirectDrawSurface_Wrapped *_this, DWORD arg1, LPDDCOLORKEY arg2);
-	HRESULT (__stdcall *GetDC)(IDirectDrawSurface_Wrapped *_this, HDC FAR *arg1);
+	HRESULT (__stdcall *GetDC)(IDirectDrawSurface_Wrapped *_this, HDC *arg1);
 	HRESULT (__stdcall *GetFlipStatus)(IDirectDrawSurface_Wrapped *_this, DWORD arg1);
 	HRESULT (__stdcall *GetOverlayPosition)(IDirectDrawSurface_Wrapped *_this, LPLONG arg1, LPLONG arg2);
-	HRESULT (__stdcall *GetPalette)(IDirectDrawSurface_Wrapped *_this, LPDIRECTDRAWPALETTE FAR* arg1);
+	HRESULT (__stdcall *GetPalette)(IDirectDrawSurface_Wrapped *_this, LPDIRECTDRAWPALETTE * arg1);
 	HRESULT (__stdcall *GetPixelFormat)(IDirectDrawSurface_Wrapped *_this, LPDDPIXELFORMAT arg1);
 	HRESULT (__stdcall *GetSurfaceDesc)(IDirectDrawSurface_Wrapped *_this, LPDDSURFACEDESC arg1);
 	HRESULT (__stdcall *Initialize)(IDirectDrawSurface_Wrapped *_this, LPDIRECTDRAW arg1, LPDDSURFACEDESC arg2);
@@ -98,13 +98,13 @@ struct IDirectDrawSurfaceVtbl_Wrapped
 
 struct IDirectDrawSurface_Wrapped
 {
-	IDirectDrawSurfaceVtbl_Wrapped FAR *lpVtbl;
+	IDirectDrawSurfaceVtbl_Wrapped *lpVtbl;
 	LPDIRECTDRAWSURFACE original;
 };
 
 struct IDirectDrawPaletteVtbl_Wrapped
 {
-	HRESULT (__stdcall *QueryInterface)(IDirectDrawPalette_Wrapped *_this, REFIID riid, LPVOID FAR * ppvObj);
+	HRESULT (__stdcall *QueryInterface)(IDirectDrawPalette_Wrapped *_this, REFIID riid, LPVOID * ppvObj);
 	ULONG (__stdcall *AddRef)(IDirectDrawPalette_Wrapped *_this);
 	ULONG (__stdcall *Release)(IDirectDrawPalette_Wrapped *_this);
 	HRESULT (__stdcall *GetCaps)(IDirectDrawPalette_Wrapped *_this, LPDWORD arg1);
@@ -115,31 +115,31 @@ struct IDirectDrawPaletteVtbl_Wrapped
 
 struct IDirectDrawPalette_Wrapped
 {
-	IDirectDrawPaletteVtbl_Wrapped FAR *lpVtbl;
+	IDirectDrawPaletteVtbl_Wrapped *lpVtbl;
 	LPDIRECTDRAWPALETTE original;
 };
 
 struct IDirectDrawVtbl_Wrapped
 {
-	HRESULT (__stdcall *QueryInterface)(IDirectDraw_Wrapped *_this, REFIID riid, LPVOID FAR * ppvObj);
+	HRESULT (__stdcall *QueryInterface)(IDirectDraw_Wrapped *_this, REFIID riid, LPVOID * ppvObj);
 	ULONG (__stdcall *AddRef)(IDirectDraw_Wrapped *_this);
 	ULONG (__stdcall *Release)(IDirectDraw_Wrapped *_this);
 	HRESULT (__stdcall *Compact)(IDirectDraw_Wrapped *_this);
-	HRESULT (__stdcall *CreateClipper)(IDirectDraw_Wrapped *_this, DWORD arg1, IDirectDrawClipper_Wrapped **arg2, IUnknown FAR * arg3);
-	HRESULT (__stdcall *CreatePalette)(IDirectDraw_Wrapped *_this, DWORD arg1, LPPALETTEENTRY arg2, IDirectDrawPalette_Wrapped **arg3, IUnknown FAR * arg4);
-	HRESULT (__stdcall *CreateSurface)(IDirectDraw_Wrapped *_this, LPDDSURFACEDESC arg1, IDirectDrawSurface_Wrapped **arg2, IUnknown FAR *arg3);
-	HRESULT (__stdcall *DuplicateSurface)(IDirectDraw_Wrapped *_this, LPDIRECTDRAWSURFACE arg1, LPDIRECTDRAWSURFACE FAR * arg2);
+	HRESULT (__stdcall *CreateClipper)(IDirectDraw_Wrapped *_this, DWORD arg1, IDirectDrawClipper_Wrapped **arg2, IUnknown * arg3);
+	HRESULT (__stdcall *CreatePalette)(IDirectDraw_Wrapped *_this, DWORD arg1, LPPALETTEENTRY arg2, IDirectDrawPalette_Wrapped **arg3, IUnknown * arg4);
+	HRESULT (__stdcall *CreateSurface)(IDirectDraw_Wrapped *_this, LPDDSURFACEDESC arg1, IDirectDrawSurface_Wrapped **arg2, IUnknown *arg3);
+	HRESULT (__stdcall *DuplicateSurface)(IDirectDraw_Wrapped *_this, LPDIRECTDRAWSURFACE arg1, LPDIRECTDRAWSURFACE * arg2);
 	HRESULT (__stdcall *EnumDisplayModes)(IDirectDraw_Wrapped *_this, DWORD arg1, LPDDSURFACEDESC arg2, LPVOID arg3, LPDDENUMMODESCALLBACK arg4);
 	HRESULT (__stdcall *EnumSurfaces)(IDirectDraw_Wrapped *_this, DWORD arg1, LPDDSURFACEDESC arg2, LPVOID arg3, LPDDENUMSURFACESCALLBACK arg4);
 	HRESULT (__stdcall *FlipToGDISurface)(IDirectDraw_Wrapped *_this);
 	HRESULT (__stdcall *GetCaps)(IDirectDraw_Wrapped *_this, LPDDCAPS arg1, LPDDCAPS arg2);
 	HRESULT (__stdcall *GetDisplayMode)(IDirectDraw_Wrapped *_this, LPDDSURFACEDESC arg1);
 	HRESULT (__stdcall *GetFourCCCodes)(IDirectDraw_Wrapped *_this, LPDWORD arg1, LPDWORD arg2);
-	HRESULT (__stdcall *GetGDISurface)(IDirectDraw_Wrapped *_this, LPDIRECTDRAWSURFACE FAR *arg1);
+	HRESULT (__stdcall *GetGDISurface)(IDirectDraw_Wrapped *_this, LPDIRECTDRAWSURFACE *arg1);
 	HRESULT (__stdcall *GetMonitorFrequency)(IDirectDraw_Wrapped *_this, LPDWORD arg1);
 	HRESULT (__stdcall *GetScanLine)(IDirectDraw_Wrapped *_this, LPDWORD arg1);
 	HRESULT (__stdcall *GetVerticalBlankStatus)(IDirectDraw_Wrapped *_this, LPBOOL arg1);
-	HRESULT (__stdcall *Initialize)(IDirectDraw_Wrapped *_this, GUID FAR *arg1);
+	HRESULT (__stdcall *Initialize)(IDirectDraw_Wrapped *_this, GUID *arg1);
 	HRESULT (__stdcall *RestoreDisplayMode)(IDirectDraw_Wrapped *_this);
 	HRESULT (__stdcall *SetCooperativeLevel)(IDirectDraw_Wrapped *_this, HWND arg1, DWORD arg2);
 	HRESULT (__stdcall *SetDisplayMode)(IDirectDraw_Wrapped *_this, DWORD width, DWORD height, DWORD bpp);
@@ -148,13 +148,13 @@ struct IDirectDrawVtbl_Wrapped
 
 struct IDirectDraw_Wrapped
 {
-	IDirectDrawVtbl_Wrapped FAR *lpVtbl;
+	IDirectDrawVtbl_Wrapped *lpVtbl;
 	LPDIRECTDRAW original;
 };
 
 namespace clipper {
 
-HRESULT __stdcall QueryInterface(IDirectDrawClipper_Wrapped *_this, REFIID riid, LPVOID FAR * ppvObj) {
+HRESULT __stdcall QueryInterface(IDirectDrawClipper_Wrapped *_this, REFIID riid, LPVOID * ppvObj) {
 	DDRAW_LOG("IDirectDrawClipper::QueryInterface");
 	CHECK_HR_RETURN(_this->original->lpVtbl->QueryInterface(_this->original, riid, ppvObj));
 }
@@ -174,7 +174,7 @@ HRESULT __stdcall GetClipList(IDirectDrawClipper_Wrapped *_this, LPRECT arg1, LP
 	CHECK_HR_RETURN(_this->original->lpVtbl->GetClipList(_this->original, arg1, arg2, arg3));
 }
 
-HRESULT __stdcall GetHWnd(IDirectDrawClipper_Wrapped *_this, HWND FAR *arg1) {
+HRESULT __stdcall GetHWnd(IDirectDrawClipper_Wrapped *_this, HWND *arg1) {
 	DDRAW_LOG("IDirectDrawClipper::GetHWnd");
 	CHECK_HR_RETURN(_this->original->lpVtbl->GetHWnd(_this->original, arg1));
 }
@@ -184,7 +184,7 @@ HRESULT __stdcall Initialize(IDirectDrawClipper_Wrapped *_this, LPDIRECTDRAW arg
 	CHECK_HR_RETURN(_this->original->lpVtbl->Initialize(_this->original, arg1, arg2));
 }
 
-HRESULT __stdcall IsClipListChanged(IDirectDrawClipper_Wrapped *_this, BOOL FAR *arg1) {
+HRESULT __stdcall IsClipListChanged(IDirectDrawClipper_Wrapped *_this, BOOL *arg1) {
 	DDRAW_LOG("IDirectDrawClipper::IsClipListChanged");
 	CHECK_HR_RETURN(_this->original->lpVtbl->IsClipListChanged(_this->original, arg1));
 }
@@ -204,7 +204,7 @@ HRESULT __stdcall SetHWnd(IDirectDrawClipper_Wrapped *_this, DWORD arg1, HWND ar
 
 namespace surface {
 
-HRESULT __stdcall QueryInterface(IDirectDrawSurface_Wrapped *_this, REFIID riid, LPVOID FAR * ppvObj) {
+HRESULT __stdcall QueryInterface(IDirectDrawSurface_Wrapped *_this, REFIID riid, LPVOID * ppvObj) {
 	DDRAW_LOG("IDirectDrawSurface::QueryInterface");
 	CHECK_HR_RETURN(_this->original->lpVtbl->QueryInterface(_this->original, riid, ppvObj));
 }
@@ -265,7 +265,7 @@ HRESULT __stdcall Flip(IDirectDrawSurface_Wrapped *_this, IDirectDrawSurface_Wra
 	CHECK_HR_RETURN(_this->original->lpVtbl->Flip(_this->original, arg1->original, arg2));
 }
 
-HRESULT __stdcall GetAttachedSurface(IDirectDrawSurface_Wrapped *_this, LPDDSCAPS arg1, LPDIRECTDRAWSURFACE FAR * arg2) {
+HRESULT __stdcall GetAttachedSurface(IDirectDrawSurface_Wrapped *_this, LPDDSCAPS arg1, LPDIRECTDRAWSURFACE * arg2) {
 	DDRAW_LOG("IDirectDrawSurface::GetAttachedSurface");
 	CHECK_HR_RETURN(_this->original->lpVtbl->GetAttachedSurface(_this->original, arg1, arg2));
 }
@@ -280,7 +280,7 @@ HRESULT __stdcall GetCaps(IDirectDrawSurface_Wrapped *_this, LPDDSCAPS arg1) {
 	CHECK_HR_RETURN(_this->original->lpVtbl->GetCaps(_this->original, arg1));
 }
 
-HRESULT __stdcall GetClipper(IDirectDrawSurface_Wrapped *_this, LPDIRECTDRAWCLIPPER FAR * arg1) {
+HRESULT __stdcall GetClipper(IDirectDrawSurface_Wrapped *_this, LPDIRECTDRAWCLIPPER * arg1) {
 	DDRAW_LOG("IDirectDrawSurface::GetClipper");
 	CHECK_HR_RETURN(_this->original->lpVtbl->GetClipper(_this->original, arg1));
 }
@@ -290,7 +290,7 @@ HRESULT __stdcall GetColorKey(IDirectDrawSurface_Wrapped *_this, DWORD arg1, LPD
 	CHECK_HR_RETURN(_this->original->lpVtbl->GetColorKey(_this->original, arg1, arg2));
 }
 
-HRESULT __stdcall GetDC(IDirectDrawSurface_Wrapped *_this, HDC FAR *arg1) {
+HRESULT __stdcall GetDC(IDirectDrawSurface_Wrapped *_this, HDC *arg1) {
 	DDRAW_LOG("IDirectDrawSurface::GetDC");
 	CHECK_HR_RETURN(_this->original->lpVtbl->GetDC(_this->original, arg1));
 }
@@ -305,7 +305,7 @@ HRESULT __stdcall GetOverlayPosition(IDirectDrawSurface_Wrapped *_this, LPLONG a
 	CHECK_HR_RETURN(_this->original->lpVtbl->GetOverlayPosition(_this->original, arg1, arg2));
 }
 
-HRESULT __stdcall GetPalette(IDirectDrawSurface_Wrapped *_this, LPDIRECTDRAWPALETTE FAR* arg1) {
+HRESULT __stdcall GetPalette(IDirectDrawSurface_Wrapped *_this, LPDIRECTDRAWPALETTE * arg1) {
 	DDRAW_LOG("IDirectDrawSurface::GetPalette");
 	CHECK_HR_RETURN(_this->original->lpVtbl->GetPalette(_this->original, arg1));
 }
@@ -389,7 +389,7 @@ HRESULT __stdcall UpdateOverlayZOrder(IDirectDrawSurface_Wrapped *_this, DWORD a
 
 namespace palette {
 
-HRESULT __stdcall QueryInterface(IDirectDrawPalette_Wrapped *_this, REFIID riid, LPVOID FAR * ppvObj) {
+HRESULT __stdcall QueryInterface(IDirectDrawPalette_Wrapped *_this, REFIID riid, LPVOID * ppvObj) {
 	DDRAW_LOG("IDirectDrawPalette::QueryInterface");
 	CHECK_HR_RETURN(_this->original->lpVtbl->QueryInterface(_this->original, riid, ppvObj));
 }
@@ -450,7 +450,7 @@ static HRESULT __stdcall EnumDisplayModesCallback(LPDDSURFACEDESC Arg1, LPVOID A
 #endif
 }
 
-HRESULT __stdcall QueryInterface(IDirectDraw_Wrapped *_this, REFIID riid, LPVOID FAR * ppvObj) {
+HRESULT __stdcall QueryInterface(IDirectDraw_Wrapped *_this, REFIID riid, LPVOID * ppvObj) {
 	DDRAW_LOG("IDirectDraw::QueryInterface");
 	CHECK_HR_RETURN(_this->original->lpVtbl->QueryInterface(_this->original, riid, ppvObj));
 }
@@ -470,7 +470,7 @@ HRESULT __stdcall Compact(IDirectDraw_Wrapped *_this) {
 	CHECK_HR_RETURN(_this->original->lpVtbl->Compact(_this->original));
 }
 
-HRESULT __stdcall CreateClipper(IDirectDraw_Wrapped *_this, DWORD arg1, IDirectDrawClipper_Wrapped **arg2, IUnknown FAR * arg3) {
+HRESULT __stdcall CreateClipper(IDirectDraw_Wrapped *_this, DWORD arg1, IDirectDrawClipper_Wrapped **arg2, IUnknown * arg3) {
 	DDRAW_LOG("IDirectDraw::CreateClipper");
 	LPDIRECTDRAWCLIPPER original;
 	HRESULT hr = _this->original->lpVtbl->CreateClipper(_this->original, arg1, &original, arg3);
@@ -494,7 +494,7 @@ HRESULT __stdcall CreateClipper(IDirectDraw_Wrapped *_this, DWORD arg1, IDirectD
 	return hr;
 }
 
-HRESULT __stdcall CreatePalette(IDirectDraw_Wrapped *_this, DWORD arg1, LPPALETTEENTRY arg2, IDirectDrawPalette_Wrapped **arg3, IUnknown FAR * arg4) {
+HRESULT __stdcall CreatePalette(IDirectDraw_Wrapped *_this, DWORD arg1, LPPALETTEENTRY arg2, IDirectDrawPalette_Wrapped **arg3, IUnknown * arg4) {
 	DDRAW_LOG("IDirectDraw::CreatePalette");
 	LPDIRECTDRAWPALETTE original;
 	HRESULT hr = _this->original->lpVtbl->CreatePalette(_this->original, arg1, arg2, &original, arg4);
@@ -516,7 +516,7 @@ HRESULT __stdcall CreatePalette(IDirectDraw_Wrapped *_this, DWORD arg1, LPPALETT
 	return hr;
 }
 
-HRESULT __stdcall CreateSurface(IDirectDraw_Wrapped *_this, LPDDSURFACEDESC arg1, IDirectDrawSurface_Wrapped **arg2, IUnknown FAR *arg3) {
+HRESULT __stdcall CreateSurface(IDirectDraw_Wrapped *_this, LPDDSURFACEDESC arg1, IDirectDrawSurface_Wrapped **arg2, IUnknown *arg3) {
 	DDRAW_LOG("IDirectDraw::CreateSurface", "%ux%u", arg1->dwWidth, arg1->dwHeight);
 	LPDIRECTDRAWSURFACE original;
 	HRESULT hr = _this->original->lpVtbl->CreateSurface(_this->original, arg1, &original, arg3);
@@ -567,7 +567,7 @@ HRESULT __stdcall CreateSurface(IDirectDraw_Wrapped *_this, LPDDSURFACEDESC arg1
 	return hr;
 }
 
-HRESULT __stdcall DuplicateSurface(IDirectDraw_Wrapped *_this, LPDIRECTDRAWSURFACE arg1, LPDIRECTDRAWSURFACE FAR * arg2) {
+HRESULT __stdcall DuplicateSurface(IDirectDraw_Wrapped *_this, LPDIRECTDRAWSURFACE arg1, LPDIRECTDRAWSURFACE * arg2) {
 	DDRAW_LOG("IDirectDraw::DuplicateSurface");
 	CHECK_HR_RETURN(_this->original->lpVtbl->DuplicateSurface(_this->original, arg1, arg2));
 }
@@ -603,7 +603,7 @@ HRESULT __stdcall GetFourCCCodes(IDirectDraw_Wrapped *_this, LPDWORD arg1, LPDWO
 	CHECK_HR_RETURN(_this->original->lpVtbl->GetFourCCCodes(_this->original, arg1, arg2));
 }
 
-HRESULT __stdcall GetGDISurface(IDirectDraw_Wrapped *_this, LPDIRECTDRAWSURFACE FAR *arg1) {
+HRESULT __stdcall GetGDISurface(IDirectDraw_Wrapped *_this, LPDIRECTDRAWSURFACE *arg1) {
 	DDRAW_LOG("IDirectDraw::GetGDISurface");
 	CHECK_HR_RETURN(_this->original->lpVtbl->GetGDISurface(_this->original, arg1));
 }
@@ -623,7 +623,7 @@ HRESULT __stdcall GetVerticalBlankStatus(IDirectDraw_Wrapped *_this, LPBOOL arg1
 	CHECK_HR_RETURN(_this->original->lpVtbl->GetVerticalBlankStatus(_this->original, arg1));
 }
 
-HRESULT __stdcall Initialize(IDirectDraw_Wrapped *_this, GUID FAR *arg1) {
+HRESULT __stdcall Initialize(IDirectDraw_Wrapped *_this, GUID *arg1) {
 	DDRAW_LOG("IDirectDraw::Initialize");
 	CHECK_HR_RETURN(_this->original->lpVtbl->Initialize(_this->original, arg1));
 }
