@@ -30,7 +30,7 @@ struct ArrayView
 #define CHECK_HR_RETURN(func) { HRESULT hr = (func); if (hr) Logf("   HRESULT: %u\n", hr); return hr; }
 
 void Logf(const char *_format, ...);
-void LogFunctionf(const char *_parentModule, const char *_module, const char *_function, const char *_argsFormat = nullptr, ...);
+bool LogFunctionf(const char *_parentModule, const char *_module, const char *_function, const char *_argsFormat = nullptr, ...);
 const char *MsgToString(uint32_t _msg);
 
 struct Library

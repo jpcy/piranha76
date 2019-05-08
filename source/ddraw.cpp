@@ -1,11 +1,56 @@
 #define CINTERFACE
 #include <ddraw.h>
 #undef CINTERFACE
+#undef min
+#undef max
+#include <bx/bx.h>
+#include <bx/string.h>
 #include "main.h"
 #include "i76.h"
 #include "ddraw.h"
 
 #define DDRAW_LOG(_function, ...) LogFunctionf(I76_EXE, DDRAW_DLL, _function, __VA_ARGS__)
+
+#pragma pack(1)
+struct TgaHeader
+{
+	uint8_t idLength;
+	uint8_t colorMapType;
+	uint8_t imageType;
+	uint16_t colorMapIndex;
+	uint16_t colorMapLength;
+	uint8_t colorMapBpp;
+	uint16_t xOrigin;
+	uint16_t yOrigin;
+	uint16_t width;
+	uint16_t height;
+	uint8_t bpp;
+	uint8_t flags;
+};
+
+static int s_tgaIndex = 0;
+
+static void WriteTga(const uint8_t *data, const uint8_t *palette, int width, int height) {
+	char filename[256];
+	bx::snprintf(filename, sizeof(filename), "debug_%0.4d.tga", s_tgaIndex);
+	TgaHeader header = {0};
+	header.colorMapType = 1;
+	header.imageType = 1;
+	header.colorMapLength = 256;
+	header.colorMapBpp = 24;
+	header.width = (uint16_t)width;
+	header.height = (uint16_t)height;
+	header.bpp = 8;
+	header.flags = 0x20;
+	FILE *f = fopen(filename, "wb");
+	if (!f)
+		return;
+	fwrite(&header, sizeof(TgaHeader), 1, f);
+	fwrite(palette, 1, 256 * 3, f);
+	fwrite(data, 1, width * height, f);
+	fclose(f);
+	s_tgaIndex++;
+}
 
 namespace ddraw {
 namespace data {
@@ -100,6 +145,8 @@ struct IDirectDrawSurface_Wrapped
 {
 	IDirectDrawSurfaceVtbl_Wrapped *lpVtbl;
 	LPDIRECTDRAWSURFACE original;
+	_DDSURFACEDESC desc;
+	IDirectDrawPalette_Wrapped *palette;
 };
 
 struct IDirectDrawPaletteVtbl_Wrapped
@@ -117,6 +164,7 @@ struct IDirectDrawPalette_Wrapped
 {
 	IDirectDrawPaletteVtbl_Wrapped *lpVtbl;
 	LPDIRECTDRAWPALETTE original;
+	PALETTEENTRY data[256];
 };
 
 struct IDirectDrawVtbl_Wrapped
@@ -151,6 +199,37 @@ struct IDirectDraw_Wrapped
 	IDirectDrawVtbl_Wrapped *lpVtbl;
 	LPDIRECTDRAW original;
 };
+
+static void LogSurface(LPDDSURFACEDESC desc) {
+	if (desc->dwFlags & (DDSD_WIDTH | DDSD_HEIGHT))
+		Logf("   size:%ux%u\n", desc->dwWidth, desc->dwHeight);
+	if (desc->dwFlags & DDSD_CAPS) {
+		Logf("   caps:%u\n", desc->ddsCaps.dwCaps);
+		if (desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+			Logf("      primary surface\n");
+		if (desc->ddsCaps.dwCaps & DDSCAPS_OFFSCREENPLAIN)
+			Logf("      offscreen plain\n");
+		if (desc->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY)
+			Logf("      system memory\n");
+		if (desc->ddsCaps.dwCaps & ~(DDSCAPS_PRIMARYSURFACE | DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY))
+			Logf("      *unknown flags*\n");
+	}
+}
+
+static void DumpSurfaceImage(IDirectDrawSurface_Wrapped *surface) {
+	_DDSURFACEDESC desc = surface->desc;
+	if (!(desc.dwFlags & DDSD_CAPS && desc.ddsCaps.dwCaps & (DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY) && desc.lpSurface))
+		return;
+	std::vector<uint8_t> palette;
+	palette.resize(256 * 3);
+	for (int i = 0; i < 256; i++) {
+		uint8_t *bgr = &palette[i * 3];
+		bgr[0] = surface->palette->data[i].peBlue;
+		bgr[1] = surface->palette->data[i].peGreen;
+		bgr[2] = surface->palette->data[i].peRed;
+	}
+	WriteTga((const uint8_t *)desc.lpSurface, palette.data(), desc.dwWidth, desc.dwHeight);
+}
 
 namespace clipper {
 
@@ -232,6 +311,8 @@ HRESULT __stdcall AddOverlayDirtyRect(IDirectDrawSurface_Wrapped *_this, LPRECT 
 HRESULT __stdcall Blt(IDirectDrawSurface_Wrapped *_this, LPRECT arg1, IDirectDrawSurface_Wrapped *arg2, LPRECT arg3, DWORD arg4, LPDDBLTFX arg5) {
 	DDRAW_LOG("IDirectDrawSurface::Blt");
 	// arg2 can be NULL
+	if (arg2)
+		DumpSurfaceImage(arg2);
 	CHECK_HR_RETURN(_this->original->lpVtbl->Blt(_this->original, arg1, arg2 ? arg2->original : nullptr, arg3, arg4, arg5));
 }
 
@@ -331,7 +412,9 @@ HRESULT __stdcall IsLost(IDirectDrawSurface_Wrapped *_this) {
 }
 
 HRESULT __stdcall Lock(IDirectDrawSurface_Wrapped *_this, LPRECT arg1, LPDDSURFACEDESC arg2, DWORD arg3, HANDLE arg4) {
-	DDRAW_LOG("IDirectDrawSurface::Lock");
+	if (DDRAW_LOG("IDirectDrawSurface::Lock"))
+		LogSurface(arg2);
+	_this->desc = *arg2;
 	CHECK_HR_RETURN(_this->original->lpVtbl->Lock(_this->original, arg1, arg2, arg3, arg4));
 }
 
@@ -362,11 +445,13 @@ HRESULT __stdcall SetOverlayPosition(IDirectDrawSurface_Wrapped *_this, LONG arg
 
 HRESULT __stdcall SetPalette(IDirectDrawSurface_Wrapped *_this, IDirectDrawPalette_Wrapped *arg1) {
 	DDRAW_LOG("IDirectDrawSurface::SetPalette");
+	_this->palette = arg1;
 	CHECK_HR_RETURN(_this->original->lpVtbl->SetPalette(_this->original, arg1->original));
 }
 
 HRESULT __stdcall Unlock(IDirectDrawSurface_Wrapped *_this, LPVOID arg1) {
 	DDRAW_LOG("IDirectDrawSurface::Unlock");
+	DumpSurfaceImage(_this);
 	CHECK_HR_RETURN(_this->original->lpVtbl->Unlock(_this->original, arg1));
 }
 
@@ -421,6 +506,7 @@ HRESULT __stdcall Initialize(IDirectDrawPalette_Wrapped *_this, IDirectDraw_Wrap
 
 HRESULT __stdcall SetEntries(IDirectDrawPalette_Wrapped *_this, DWORD arg1, DWORD arg2, DWORD arg3, LPPALETTEENTRY arg4) {
 	DDRAW_LOG("IDirectDrawPalette::SetEntries");
+	memcpy(&_this->data[arg2], arg4, sizeof(PALETTEENTRY) * arg3);
 	CHECK_HR_RETURN(_this->original->lpVtbl->SetEntries(_this->original, arg1, arg2, arg3, arg4));
 }
 
@@ -495,7 +581,10 @@ HRESULT __stdcall CreateClipper(IDirectDraw_Wrapped *_this, DWORD arg1, IDirectD
 }
 
 HRESULT __stdcall CreatePalette(IDirectDraw_Wrapped *_this, DWORD arg1, LPPALETTEENTRY arg2, IDirectDrawPalette_Wrapped **arg3, IUnknown * arg4) {
-	DDRAW_LOG("IDirectDraw::CreatePalette");
+	if (DDRAW_LOG("IDirectDraw::CreatePalette", "flags:%u", arg1)) {
+		if (!(arg1 & DDPCAPS_8BIT))
+			Logf("   *not 8 bit*\n");
+	}
 	LPDIRECTDRAWPALETTE original;
 	HRESULT hr = _this->original->lpVtbl->CreatePalette(_this->original, arg1, arg2, &original, arg4);
 	if (hr) {
@@ -512,25 +601,14 @@ HRESULT __stdcall CreatePalette(IDirectDraw_Wrapped *_this, DWORD arg1, LPPALETT
 	pal->lpVtbl->Initialize = palette::Initialize;
 	pal->lpVtbl->SetEntries = palette::SetEntries;
 	pal->original = original;
+	memcpy(pal->data, arg2, sizeof(PALETTEENTRY) * 256);
 	*arg3 = pal;
 	return hr;
 }
 
 HRESULT __stdcall CreateSurface(IDirectDraw_Wrapped *_this, LPDDSURFACEDESC arg1, IDirectDrawSurface_Wrapped **arg2, IUnknown *arg3) {
-	DDRAW_LOG("IDirectDraw::CreateSurface", "flags:%u", arg1->dwFlags);
-	if (arg1->dwFlags & (DDSD_WIDTH | DDSD_HEIGHT))
-		Logf("   size:%ux%u\n", arg1->dwWidth, arg1->dwHeight);
-	if (arg1->dwFlags & DDSD_CAPS) {
-		Logf("   caps:%u\n", arg1->ddsCaps.dwCaps);
-		if (arg1->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
-			Logf("      primary surface\n");
-		if (arg1->ddsCaps.dwCaps & DDSCAPS_OFFSCREENPLAIN)
-			Logf("      offscreen plain\n");
-		if (arg1->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY)
-			Logf("      system memory\n");
-		if (arg1->ddsCaps.dwCaps & ~(DDSCAPS_PRIMARYSURFACE | DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY))
-			Logf("      *unknown flags*\n");
-	}
+	if (DDRAW_LOG("IDirectDraw::CreateSurface", "flags:%u", arg1->dwFlags))
+		LogSurface(arg1);
 	LPDIRECTDRAWSURFACE original;
 	HRESULT hr = _this->original->lpVtbl->CreateSurface(_this->original, arg1, &original, arg3);
 	if (hr) {
@@ -576,6 +654,7 @@ HRESULT __stdcall CreateSurface(IDirectDraw_Wrapped *_this, LPDDSURFACEDESC arg1
 	surf->lpVtbl->UpdateOverlayDisplay = surface::UpdateOverlayDisplay;
 	surf->lpVtbl->UpdateOverlayZOrder = surface::UpdateOverlayZOrder;
 	surf->original = original;
+	surf->desc = *arg1;
 	*arg2 = surf;
 	return hr;
 }

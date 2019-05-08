@@ -14,10 +14,10 @@ void Logf(const char *_format, ...) {
 	OutputDebugStringA(buffer);
 }
 
-void LogFunctionf(const char *_parentModule, const char *_module, const char *_function, const char *_argsFormat, ...) {
+bool LogFunctionf(const char *_parentModule, const char *_module, const char *_function, const char *_argsFormat, ...) {
 #ifdef FUNCTION_LOG_FILTER_MODULE
 	if (bx::strCmpI(_module, FUNCTION_LOG_FILTER_MODULE) != 0)
-		return;
+		return false;
 #endif
 	char buffer[2048];
 	if (_argsFormat) {
@@ -27,6 +27,7 @@ void LogFunctionf(const char *_parentModule, const char *_module, const char *_f
 		va_end(args);
 	}
 	Logf("%-16s %-16s %-32s %s\n", _parentModule, _module, _function, _argsFormat ? buffer : "");
+	return true;
 }
 
 struct MsgName
