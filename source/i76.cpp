@@ -1,9 +1,4 @@
-#include <stdio.h>
-#include <bx/bx.h>
-#include <bx/string.h>
-#define CINTERFACE
-#include <ddraw.h>
-#undef CINTERFACE
+#include "pch.h"
 #include "main.h"
 #include "ddraw.h"
 #include "i76shell.h"

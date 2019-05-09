@@ -1,0 +1,10 @@
+#include <stdio.h>
+#pragma once
+#define CINTERFACE
+#include <ddraw.h>
+#undef CINTERFACE
+#undef min
+#undef max
+#include <bx/bx.h>
+#include <bx/os.h>
+#include <bx/string.h>

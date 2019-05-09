@@ -1,6 +1,4 @@
-#include <stdio.h>
-#include <bx/bx.h>
-#include <bx/string.h>
+#include "pch.h"
 #include "MemoryModule.h"
 #include "main.h"
 #include "zglide.h"

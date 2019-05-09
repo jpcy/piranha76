@@ -34,15 +34,20 @@ project "piranha76"
 	exceptionhandling "Off"
 	rtti "Off"
 	warnings "Extra"
+	pchheader "pch.h"
+	pchsource "source/pch.cpp"
 	files "source/*.*"
 	includedirs
 	{
 		path.join(BX_DIR, "include")
 	}
 	links { "bx" }
+	filter "files:source/MemoryModule.c"
+		flags "NoPCH"
 	filter "system:windows"
 		links { "psapi" }
 	filter "action:vs*"
+		defines { "_CRT_SECURE_NO_WARNINGS" }
 		includedirs { path.join(BX_DIR, "include/compat/msvc") }
 	filter { "system:windows", "action:gmake" }
 		includedirs { path.join(BX_DIR, "include/compat/mingw") }

@@ -1,6 +1,4 @@
-#include <stdio.h>
-#include <bx/bx.h>
-#include <bx/os.h>
+#include "pch.h"
 #include "main.h"
 #include "i76.h"
 

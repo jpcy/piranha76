@@ -1,10 +1,4 @@
-#define CINTERFACE
-#include <ddraw.h>
-#undef CINTERFACE
-#undef min
-#undef max
-#include <bx/bx.h>
-#include <bx/string.h>
+#include "pch.h"
 #include "main.h"
 #include "i76.h"
 #include "ddraw.h"
