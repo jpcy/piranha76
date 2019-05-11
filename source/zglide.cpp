@@ -17,22 +17,22 @@ namespace original {
 int (*CheckFunc)(void *hwConfig); // GrHwConfiguration
 int (*FirstDevice)(int *_arg1);
 int (*GetFuncDesc)(char *_arg1, int *_arg2, int arg3);
-void (*GetNumDevice)();
+int (*GetNumDevice)();
 int (*GetSocketCaps)();
 int (*LastDevice)();
 int (*LockDisplay)(int *_arg1);
-void (*LostDeviceDisplay)();
-void (*PreloadTexture)();
-void (*RefreshDisplay)();
-void (*Render)();
-void (*RenderNoClip)();
-void (*RenderRefresh)();
-void (*RestoreDevice)();
+int (*LostDeviceDisplay)();
+int (*PreloadTexture)(void **_arg1, int _arg2);
+int (*RefreshDisplay)();
+int (*Render)(int _arg1, int _arg2, int _arg3, int _arg4, int _arg5);
+int (*RenderNoClip)(int _arg1, int _arg2, int _arg3, int _arg4, int _arg5);
+int (*RenderRefresh)();
+int (*RestoreDevice)();
 void (*SetLumaTable)();
 int (*SetState)(int _arg1, int _arg2);
-void (*SetTexturePalette)();
+int (*SetTexturePalette)();
 int (*UnlockDisplay)();
-void (*UpdateTexture)();
+int (*UpdateTexture)(void **_arg1, int _arg2);
 
 } // namespace original
 
@@ -81,8 +81,10 @@ int GetFuncDesc(char *_arg1, int *_arg2, int _arg3) {
 	// _arg2 should be 0, 1 or 2
 }
 
-void GetNumDevice() {
+// simply returns 1
+int GetNumDevice() {
 	ZGLIDE_LOG("GetNumDevice");
+	return 1;
 }
 
 // & 1 - use wbuffer
@@ -107,36 +109,51 @@ int LockDisplay(int *_arg1) {
 	return result;
 }
 
-void LostDeviceDisplay() {
+// always returns 0
+int LostDeviceDisplay() {
 	ZGLIDE_LOG("LostDeviceDisplay");
+	return original::LostDeviceDisplay();
 }
 
-void PreloadTexture() {
-	ZGLIDE_LOG("PreloadTexture");
+int PreloadTexture(void **_arg1, int _arg2) {
+	ZGLIDE_LOG("PreloadTexture", "arg2:%d", _arg2);
+	return original::PreloadTexture(_arg1, _arg2);
 }
 
-void RefreshDisplay() {
+int RefreshDisplay() {
 	ZGLIDE_LOG("RefreshDisplay");
+	int result = original::RefreshDisplay();
+	Logf("   %d\n", result);
+	return result;
 }
 
-void Render() {
+int Render(int _arg1, int _arg2, int _arg3, int _arg4, int _arg5) {
+#if LOG_ZGLIDE_VERBOSE
 	ZGLIDE_LOG("Render");
+#endif
+	return original::Render(_arg1, _arg2, _arg3, _arg4, _arg5);
 }
 
-void RenderNoClip() {
+int RenderNoClip(int _arg1, int _arg2, int _arg3, int _arg4, int _arg5) {
 	ZGLIDE_LOG("RenderNoClip");
+	return original::RenderNoClip(_arg1, _arg2, _arg3, _arg4, _arg5);
 }
 
-void RenderRefresh() {
+// just increments a counter
+// always returns 0
+int RenderRefresh() {
 	ZGLIDE_LOG("RenderRefresh");
+	return original::RenderRefresh();
 }
 
-void RestoreDevice() {
+int RestoreDevice() {
 	ZGLIDE_LOG("RestoreDevice");
+	return original::RestoreDevice();
 }
 
 void SetLumaTable() {
 	ZGLIDE_LOG("SetLumaTable");
+	original::SetLumaTable();
 }
 
 // always returns 0
@@ -145,8 +162,10 @@ int SetState(int _arg1, int _arg2) {
 	return original::SetState(_arg1, _arg2);
 }
 
-void SetTexturePalette() {
+// simply returns 0
+int SetTexturePalette() {
 	ZGLIDE_LOG("SetTexturePalette");
+	return 0;
 }
 
 // just wraps grLfbUnlock
@@ -157,8 +176,9 @@ int UnlockDisplay() {
 	return result;
 }
 
-void UpdateTexture() {
-	ZGLIDE_LOG("UpdateTexture");
+int UpdateTexture(void **_arg1, int _arg2) {
+	ZGLIDE_LOG("UpdateTexture", "arg2:%d", _arg2);
+	return original::UpdateTexture(_arg1, _arg2);
 }
 
 } // namespace wrap
