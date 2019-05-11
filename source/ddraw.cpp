@@ -5,6 +5,7 @@
 
 #define DDRAW_LOG(_function, ...) LogFunctionf(I76_EXE, DDRAW_DLL, _function, __VA_ARGS__)
 
+#if DDRAW_DUMP_SURFACES
 #pragma pack(1)
 struct TgaHeader
 {
@@ -45,6 +46,7 @@ static void WriteTga(const uint8_t *data, const uint8_t *palette, int width, int
 	fclose(f);
 	s_tgaIndex++;
 }
+#endif
 
 namespace ddraw {
 namespace data {
@@ -211,6 +213,7 @@ static void LogSurface(LPDDSURFACEDESC desc) {
 }
 
 static void DumpSurfaceImage(IDirectDrawSurface_Wrapped *surface) {
+#if DDRAW_DUMP_SURFACES
 	_DDSURFACEDESC desc = surface->desc;
 	if (!(desc.dwFlags & DDSD_CAPS && desc.ddsCaps.dwCaps & (DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY) && desc.lpSurface))
 		return;
@@ -223,6 +226,9 @@ static void DumpSurfaceImage(IDirectDrawSurface_Wrapped *surface) {
 		bgr[2] = surface->palette->data[i].peRed;
 	}
 	WriteTga((const uint8_t *)desc.lpSurface, palette.data(), desc.dwWidth, desc.dwHeight);
+#else
+	BX_UNUSED(surface);
+#endif
 }
 
 namespace clipper {
@@ -510,11 +516,8 @@ static HRESULT __stdcall EnumDisplayModesCallback(LPDDSURFACEDESC Arg1, LPVOID A
 	Logf("   %ux%u, %u bpp\n", Arg1->dwWidth, Arg1->dwHeight, Arg1->ddpfPixelFormat.dwRGBBitCount);
 	if (Arg2)
 		Logf("      arg2 is not null\n");
-#if FORCE_ENUM_DISPLAY_MODE_16BPP
-	// i76 only cares about dwWidth, dwHeight, and this
-	Arg1->ddpfPixelFormat.dwRGBBitCount = 16;
-#endif
 #if 0
+	// i76 only cares about dwWidth, dwHeight, and this
 	data::DisplayMode &mode = data::displayModes[*data::numDisplayModes];
 	mode.width = Arg1->dwWidth;
 	mode.height = Arg1->dwHeight;

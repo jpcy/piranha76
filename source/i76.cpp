@@ -591,7 +591,7 @@ int StrLookupFormat(char *buffer_, char *_format, ...) {
 // user32.dll
 
 BOOL WINAPI AdjustWindowRect(LPRECT lpRect, DWORD dwStyle, BOOL bMenu) {
-	I76_LOG("user32.dll", "AdjustWindowRect");
+	I76_LOG("user32.dll", "AdjustWindowRect", "left:%d, right:%d, top:%d, bottom:%d", lpRect->left, lpRect->right, lpRect->top, lpRect->bottom);
 	return original::AdjustWindowRect(lpRect, dwStyle, bMenu);
 }
 
@@ -613,8 +613,13 @@ BOOL WINAPI ClipCursor(CONST RECT *lpRect) {
 	return original::ClipCursor(lpRect);
 }
 
+// WS_BORDER | WS_MAXIMIZE | WS_DISABLED
 HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam) {
-	I76_LOG("user32.dll", "CreateWindowExA", "classname:'%s', window name:'%s', width:%d, height:%d", lpClassName, lpWindowName, nWidth, nHeight);
+	I76_LOG("user32.dll", "CreateWindowExA", "classname:'%s', window name:'%s', style:%u, width:%d, height:%d", lpClassName, lpWindowName, dwStyle, nWidth, nHeight);
+#if FORCE_WINDOWED
+	dwStyle &= ~WS_MAXIMIZE;
+	dwStyle |= WS_CAPTION | WS_SYSMENU;
+#endif
 	return original::CreateWindowExA(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
 }
 
@@ -686,11 +691,11 @@ SHORT WINAPI GetKeyState(int nVirtKey) {
 
 int WINAPI GetSystemMetrics(int nIndex) {
 	I76_LOG("user32.dll", "GetSystemMetrics", "nIndex:%d", nIndex);
-#if FORCE_1024_RESOLUTION
+#if FORCE_WINDOWED
 	if (nIndex == SM_CXSCREEN)
-		return 1024;
+		return 640;
 	else if (nIndex == SM_CYSCREEN)
-		return 768;
+		return 480;
 #endif
 	return original::GetSystemMetrics(nIndex);
 }
